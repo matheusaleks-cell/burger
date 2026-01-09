@@ -127,6 +127,7 @@ export const useProducts = () => {
             // 1. Update Product
             const { data, error } = await supabase.from("products").update(productUpdates).eq("id", id).select().maybeSingle();
             if (error) throw error;
+            if (!data) throw new Error("Produto não encontrado ou permissão negada");
 
             // 2. Update Complements (if provided)
             if (complementGroupIds) {
