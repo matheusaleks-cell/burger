@@ -125,7 +125,7 @@ export const useProducts = () => {
             const { pousada_ids, is_available, ...productUpdates } = updates as any;
 
             // 1. Update Product
-            const { data, error } = await supabase.from("products").update(productUpdates).eq("id", id).select().single();
+            const { data, error } = await supabase.from("products").update(productUpdates).eq("id", id).select().maybeSingle();
             if (error) throw error;
 
             // 2. Update Complements (if provided)
