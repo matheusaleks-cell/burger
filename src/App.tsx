@@ -1,0 +1,223 @@
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { CartProvider } from "@/contexts/CartContext";
+import { PousadaProvider } from "@/contexts/PousadaContext";
+import { AppLayout } from "@/components/layout/AppLayout";
+
+// Pages
+import Auth from "./pages/Auth";
+import Dashboard from "./pages/Dashboard";
+import Products from "./pages/Products";
+import Customers from "./pages/Customers";
+import Orders from "./pages/Orders";
+import Kitchen from "./pages/Kitchen";
+import Reports from "./pages/Reports";
+import Settings from "./pages/Settings";
+import Pousadas from "./pages/Pousadas";
+import Track from "./pages/Track";
+import NotFound from "./pages/NotFound";
+import GuestLanding from "./pages/GuestLanding";
+import GuestMenu from "./pages/GuestMenu";
+import GuestTrack from "./pages/GuestTrack";
+import MenuManagement from "./pages/MenuManagement";
+import Addons from "./pages/Addons";
+
+const queryClient = new QueryClient();
+
+import { fixAdminRole } from "@/utils/fixAdminRole";
+import { useEffect } from "react";
+
+function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: string[] }) {
+  const { user, role, loading, isAdmin } = useAuth();
+
+  useEffect(() => {
+    fixAdminRole();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  // Determine effective role same as Sidebar
+  const effectiveRole = isAdmin ? "admin" : role;
+
+  if (allowedRoles && effectiveRole && !allowedRoles.includes(effectiveRole)) {
+    // Redirect unauthorized access to kitchen as safe default
+    return <Navigate to="/kitchen" replace />;
+  }
+
+
+  return <>{children}</>;
+}
+
+function PublicRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (user) {
+    return <Navigate to="/orders" replace />;
+  }
+
+  return <>{children}</>;
+}
+
+function AppRoutes() {
+  return (
+    <Routes>
+      {/* Guest routes (no auth required) */}
+      <Route path="/" element={<GuestMenu />} />
+      <Route path="/guest/menu" element={<Navigate to="/" replace />} />
+      <Route path="/guest/track/:orderNumber" element={<GuestTrack />} />
+
+      {/* Auth routes */}
+      <Route
+        path="/auth"
+        element={
+          <PublicRoute>
+            <Auth />
+          </PublicRoute>
+        }
+      />
+
+      {/* Legacy welcome page redirected to root */}
+      <Route path="/welcome" element={<Navigate to="/" replace />} />
+
+      {/* Order tracking (legacy) */}
+      <Route path="/track" element={<Track />} />
+      <Route path="/track/:orderNumber" element={<Track />} />
+
+      {/* Protected routes with layout */}
+      <Route
+        element={
+          <ProtectedRoute>
+            <AppLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "attendant"]}>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/orders"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "attendant"]}>
+              <Orders />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/kitchen"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "attendant", "kitchen"]}>
+              <Kitchen />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/products"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <Products />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/addons"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <Addons />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/menu-management"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <MenuManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/customers"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "attendant"]}>
+              <Customers />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <Reports />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <Settings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/pousadas"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <Pousadas />
+            </ProtectedRoute>
+          }
+        />
+      </Route>
+
+
+
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+}
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <AuthProvider>
+          <PousadaProvider>
+            <CartProvider>
+              <AppRoutes />
+            </CartProvider>
+          </PousadaProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
+
+export default App;
