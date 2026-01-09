@@ -8,6 +8,7 @@ import { AddressSearch } from "./AddressSearch";
 import { Pousada } from "@/hooks/usePousadas";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface GuestInfo {
     name: string;
@@ -33,6 +34,7 @@ export function GuestIdentification({ guestInfo, setGuestInfo, onIdentify, pousa
 
     // Find HQ for 'local' mode
     const hqPousada = pousadas.find(p => p.is_hq);
+    const { t } = useLanguage();
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -69,49 +71,49 @@ export function GuestIdentification({ guestInfo, setGuestInfo, onIdentify, pousa
                 />
                 <Card className="z-10 w-full max-w-2xl bg-white/90 backdrop-blur shadow-xl border-gray-100 animate-slide-up">
                     <CardHeader className="text-center pb-8 border-b border-gray-100">
-                        <CardTitle className="text-3xl font-black text-gray-900">Como você quer pedir?</CardTitle>
-                        <CardDescription className="text-lg">Escolha uma opção para continuar</CardDescription>
+                        <CardTitle className="text-3xl font-black text-gray-900">{t.guest.identify}</CardTitle>
+                        <CardDescription className="text-lg">{t.guest.identify_desc}</CardDescription>
                     </CardHeader>
                     <CardContent className="pt-8 grid gap-4 md:grid-cols-3">
                         <Button
                             variant="outline"
-                            className="h-auto py-8 flex flex-col gap-4 hover:border-emerald-500 hover:bg-emerald-50 group border-2 border-dashed"
+                            className="h-auto py-4 flex flex-col gap-3 hover:border-emerald-500 hover:bg-emerald-50 group border-2 border-dashed"
                             onClick={() => setMode('delivery')}
                         >
                             <div className="bg-emerald-100 p-4 rounded-full group-hover:scale-110 transition-transform">
                                 <Bike className="h-8 w-8 text-emerald-600" />
                             </div>
                             <div className="text-center">
-                                <span className="block font-black text-lg text-gray-800">Delivery</span>
-                                <span className="text-sm text-gray-500">Receber em casa</span>
+                                <span className="block font-black text-lg text-gray-800">{t.guest.delivery}</span>
+                                <span className="text-sm text-gray-500">{t.guest.delivery_desc}</span>
                             </div>
                         </Button>
 
                         <Button
                             variant="outline"
-                            className="h-auto py-8 flex flex-col gap-4 hover:border-primary hover:bg-orange-50 group border-2 border-dashed"
+                            className="h-auto py-4 flex flex-col gap-3 hover:border-primary hover:bg-orange-50 group border-2 border-dashed"
                             onClick={() => setMode('local')}
                         >
                             <div className="bg-orange-100 p-4 rounded-full group-hover:scale-110 transition-transform">
                                 <Utensils className="h-8 w-8 text-primary" />
                             </div>
                             <div className="text-center">
-                                <span className="block font-black text-lg text-gray-800">Comer no Local</span>
-                                <span className="text-sm text-gray-500">Mesa ou Balcão</span>
+                                <span className="block font-black text-lg text-gray-800">{t.guest.local}</span>
+                                <span className="text-sm text-gray-500">{t.guest.local_desc}</span>
                             </div>
                         </Button>
 
                         <Button
                             variant="outline"
-                            className="h-auto py-8 flex flex-col gap-4 hover:border-blue-500 hover:bg-blue-50 group border-2 border-dashed"
+                            className="h-auto py-4 flex flex-col gap-3 hover:border-blue-500 hover:bg-blue-50 group border-2 border-dashed"
                             onClick={() => setMode('pousada')}
                         >
                             <div className="bg-blue-100 p-4 rounded-full group-hover:scale-110 transition-transform">
                                 <Home className="h-8 w-8 text-blue-600" />
                             </div>
                             <div className="text-center">
-                                <span className="block font-black text-lg text-gray-800">Na Pousada</span>
-                                <span className="text-sm text-gray-500">Sou hóspede</span>
+                                <span className="block font-black text-lg text-gray-800">{t.guest.pousada}</span>
+                                <span className="text-sm text-gray-500">{t.guest.pousada_desc}</span>
                             </div>
                         </Button>
                     </CardContent>
@@ -138,22 +140,22 @@ export function GuestIdentification({ guestInfo, setGuestInfo, onIdentify, pousa
                         className="absolute left-4 top-4 text-gray-400 hover:text-gray-900"
                         onClick={() => setMode(null)}
                     >
-                        ← Voltar
+                        ← {t.guest.back}
                     </Button>
                     <div className={`mx-auto p-4 rounded-full bg-${colorTheme}-100 mb-4 w-fit`}>
                         <TitleIcon className={`h-8 w-8 text-${colorTheme}-600`} />
                     </div>
                     <CardTitle className="text-2xl font-black uppercase text-gray-900">
-                        {mode === 'delivery' ? 'Dados de Entrega' : mode === 'local' ? 'Identificação' : 'Dados da Pousada'}
+                        {mode === 'delivery' ? t.guest.delivery : mode === 'local' ? t.guest.local : t.guest.pousada}
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-6">
                     <form onSubmit={handleSubmit} className="space-y-5">
                         {/* NAME */}
                         <div className="space-y-2">
-                            <Label>Seu Nome</Label>
+                            <Label>{t.guest.name_label}</Label>
                             <Input
-                                placeholder="Como podemos te chamar?"
+                                placeholder={t.guest.name_placeholder}
                                 value={guestInfo.name}
                                 onChange={(e) => setGuestInfo({ ...guestInfo, name: e.target.value })}
                                 required
@@ -163,9 +165,9 @@ export function GuestIdentification({ guestInfo, setGuestInfo, onIdentify, pousa
 
                         {/* PHONE */}
                         <div className="space-y-2">
-                            <Label>WhatsApp</Label>
+                            <Label>{t.guest.phone_label}</Label>
                             <Input
-                                placeholder="(00) 00000-0000"
+                                placeholder={t.guest.phone_placeholder}
                                 value={guestInfo.phone}
                                 onChange={(e) => setGuestInfo({ ...guestInfo, phone: e.target.value })}
                                 required
@@ -177,16 +179,16 @@ export function GuestIdentification({ guestInfo, setGuestInfo, onIdentify, pousa
                         {mode === 'delivery' && (
                             <>
                                 <div className="space-y-2">
-                                    <Label>Endereço de Entrega</Label>
+                                    <Label>{t.guest.address_label}</Label>
                                     <AddressSearch
                                         onSelect={handleAddressSelect}
                                         currentAddress={guestInfo.room}
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Complemento / Ponto de Referência</Label>
+                                    <Label>{t.guest.complement_label}</Label>
                                     <Textarea
-                                        placeholder="Ex: Apto 102, Próximo ao mercado..."
+                                        placeholder={t.guest.complement_placeholder}
                                         value={guestInfo.address_complement || ""}
                                         onChange={(e) => setGuestInfo({ ...guestInfo, address_complement: e.target.value })}
                                         className="bg-gray-50 border-gray-200 resize-none"
@@ -199,14 +201,14 @@ export function GuestIdentification({ guestInfo, setGuestInfo, onIdentify, pousa
                         {mode === 'pousada' && (
                             <>
                                 <div className="space-y-2">
-                                    <Label>Selecione sua Pousada</Label>
+                                    <Label>{t.guest.pousada_label}</Label>
                                     <Select
                                         value={selectedPousadaId}
                                         onValueChange={setSelectedPousadaId}
                                         required
                                     >
                                         <SelectTrigger className="h-12 bg-gray-50 border-gray-200">
-                                            <SelectValue placeholder="Escolha a pousada..." />
+                                            <SelectValue placeholder={t.guest.pousada_placeholder} />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {pousadas.filter(p => !p.is_hq).map(p => (
@@ -216,9 +218,9 @@ export function GuestIdentification({ guestInfo, setGuestInfo, onIdentify, pousa
                                     </Select>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Número do Quarto</Label>
+                                    <Label>{t.guest.room_label}</Label>
                                     <Input
-                                        placeholder="Ex: 101"
+                                        placeholder={t.guest.room_placeholder}
                                         value={guestInfo.room}
                                         onChange={(e) => setGuestInfo({ ...guestInfo, room: e.target.value })}
                                         required
@@ -230,9 +232,9 @@ export function GuestIdentification({ guestInfo, setGuestInfo, onIdentify, pousa
 
                         {mode === 'local' && (
                             <div className="space-y-2">
-                                <Label>Mesa ou Identificação</Label>
+                                <Label>{t.guest.table_label}</Label>
                                 <Input
-                                    placeholder="Ex: Mesa 05 ou Balcão"
+                                    placeholder={t.guest.table_placeholder}
                                     value={guestInfo.room}
                                     onChange={(e) => setGuestInfo({ ...guestInfo, room: e.target.value })}
                                     required
@@ -242,7 +244,7 @@ export function GuestIdentification({ guestInfo, setGuestInfo, onIdentify, pousa
                         )}
 
                         <Button type="submit" className={`w-full h-14 text-lg font-bold mt-4 shadow-lg text-white bg-${colorTheme}-600 hover:bg-${colorTheme}-700`}>
-                            CONFIRMAR E PEDIR
+                            {t.guest.confirm_btn}
                         </Button>
                     </form>
                 </CardContent>

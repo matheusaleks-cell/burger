@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Category } from "./useCategories";
@@ -37,7 +38,6 @@ export const useProducts = () => {
             const { data, error } = await supabase
                 .from("products")
                 .select("*, categories(*), product_pousadas(pousada_id)");
-            // .order("display_order", { ascending: true }); // Temporarily disabled to fix 400 error
 
             if (error) {
                 console.error("Error fetching products:", error);
@@ -45,15 +45,35 @@ export const useProducts = () => {
                 return [];
             }
 
-            // Transform join data to simple array of IDs
             return (data as any[]).map(p => ({
                 ...p,
-                // Derive boolean is_available from status
                 is_available: p.availability_status === 'available' || !p.availability_status,
                 pousada_ids: p.product_pousadas?.map((pp: any) => pp.pousada_id) || []
             })) as Product[];
         },
     });
+
+    // Real-time Subscription
+    useEffect(() => {
+        const channel = supabase
+            .channel('products-changes')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'products'
+                },
+                () => {
+                    queryClient.invalidateQueries({ queryKey: ["products"] });
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [queryClient]);
 
     const createProduct = useMutation({
         mutationFn: async ({ product, complementGroupIds }: { product: ProductInput, complementGroupIds?: string[] }) => {

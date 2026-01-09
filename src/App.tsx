@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import { PousadaProvider } from "@/contexts/PousadaContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 
@@ -209,11 +210,13 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <PousadaProvider>
-            <CartProvider>
-              <AppRoutes />
-            </CartProvider>
-          </PousadaProvider>
+          <LanguageProvider>
+            <PousadaProvider>
+              <CartProvider>
+                <AppRoutes />
+              </CartProvider>
+            </PousadaProvider>
+          </LanguageProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

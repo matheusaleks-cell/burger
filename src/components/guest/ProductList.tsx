@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Search, ImageIcon } from "lucide-react";
 import { Product } from "@/hooks/useProducts";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Category {
     id: string;
@@ -25,6 +26,8 @@ export function ProductList({
     onProductClick,
     isDeliveryMode,
 }: ProductListProps) {
+    const { t } = useLanguage();
+
     const filteredProducts = products.filter((product) => {
         const matchesCategory = selectedCategory === "all" || product.category_id === selectedCategory;
         const matchesSearch =
@@ -65,8 +68,8 @@ export function ProductList({
                                     <Card
                                         key={product.id}
                                         className={`group relative flex overflow-hidden border bg-white shadow-sm hover:shadow-lg transition-all duration-300 rounded-2xl cursor-pointer ${isDeliveryMode
-                                                ? 'border-emerald-100 hover:border-emerald-300'
-                                                : 'border-gray-100 hover:border-primary/20'
+                                            ? 'border-emerald-100 hover:border-emerald-300'
+                                            : 'border-gray-100 hover:border-primary/20'
                                             }`}
                                         onClick={() => onProductClick(product)}
                                     >
@@ -89,8 +92,8 @@ export function ProductList({
                                                 <Button
                                                     size="icon"
                                                     className={`h-9 w-9 rounded-xl text-white shadow-lg transition-all duration-300 shrink-0 ${isDeliveryMode
-                                                            ? 'bg-emerald-600 shadow-emerald-200 group-hover:bg-emerald-700 group-hover:shadow-emerald-300'
-                                                            : 'bg-gray-900 shadow-gray-900/20 group-hover:bg-primary group-hover:shadow-primary/30'
+                                                        ? 'bg-emerald-600 shadow-emerald-200 group-hover:bg-emerald-700 group-hover:shadow-emerald-300'
+                                                        : 'bg-gray-900 shadow-gray-900/20 group-hover:bg-primary group-hover:shadow-primary/30'
                                                         }`}
                                                 >
                                                     <Plus className="h-5 w-5" />

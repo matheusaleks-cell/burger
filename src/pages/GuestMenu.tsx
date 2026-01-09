@@ -403,7 +403,7 @@ export default function GuestMenu() {
         )}
 
         {/* Promo Carousel */}
-        {!isStoreClosed && <PromoCarousel />}
+        {!isStoreClosed && (!pousadas.find(p => p.is_hq) || pousadas.find(p => p.is_hq)?.show_banners !== false) && <PromoCarousel />}
       </div>
 
       {!isStoreClosed && (

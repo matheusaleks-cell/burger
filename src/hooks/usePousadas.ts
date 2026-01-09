@@ -21,6 +21,7 @@ export interface Pousada {
     estimated_time_min?: number;
     estimated_time_max?: number;
     accepted_payment_methods?: string[];
+    show_banners?: boolean;
 }
 
 export type PousadaInput = Omit<Pousada, "id">;

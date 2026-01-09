@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useBanners } from "@/hooks/useBanners";
+import { usePousadas } from "@/hooks/usePousadas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +11,12 @@ import { toast } from "sonner";
 
 export function BannerManager() {
     const { banners, isLoading, uploadBanner, deleteBanner, toggleBannerStatus } = useBanners();
+    const { pousadas, updatePousada } = usePousadas();
+
+    // Find HQ to manage global settings
+    const hq = pousadas.find(p => p.is_hq);
+    const showBanners = hq?.show_banners !== false;
+
     const [uploading, setUploading] = useState(false);
     const [newBannerTitle, setNewBannerTitle] = useState("");
     const [newBannerLink, setNewBannerLink] = useState("");
@@ -48,12 +55,28 @@ export function BannerManager() {
         <div className="space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-xl flex items-center gap-2">
-                        <ImageIcon className="w-5 h-5" /> Adicionar Novo Banner
-                    </CardTitle>
-                    <CardDescription>
-                        Envie uma imagem para exibir no topo do cardápio digital. Formato recomendado: 1200x400px (3:1).
-                    </CardDescription>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <CardTitle className="text-xl flex items-center gap-2">
+                                <ImageIcon className="w-5 h-5" /> Adicionar Novo Banner
+                            </CardTitle>
+                            <CardDescription>
+                                Envie uma imagem para exibir no topo do cardápio digital. Formato recomendado: 1200x400px (3:1).
+                            </CardDescription>
+                        </div>
+                        {hq && (
+                            <div className="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-lg border border-gray-200">
+                                <Label htmlFor="show-banners" className="text-sm font-bold text-gray-700 cursor-pointer">
+                                    Exibir Banners
+                                </Label>
+                                <Switch
+                                    id="show-banners"
+                                    checked={showBanners}
+                                    onCheckedChange={(checked) => updatePousada.mutate({ id: hq.id, show_banners: checked })}
+                                />
+                            </div>
+                        )}
+                    </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

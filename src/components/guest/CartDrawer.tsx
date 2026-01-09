@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
 import { Minus, Plus, ArrowRight, Truck, CreditCard, QrCode, Banknote, AlertCircle, Check } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface CartDrawerProps {
     isOpen: boolean;
@@ -30,6 +31,7 @@ export function CartDrawer({
     deliveryFee,
     pousadaName
 }: CartDrawerProps) {
+    const { t } = useLanguage();
     const { cart, updateQuantity, cartTotal } = useCart();
     const [step, setStep] = useState<"referral" | "payment">("referral");
     const [paymentMethod, setPaymentMethod] = useState<"pix" | "card" | "cash">("pix");
@@ -66,19 +68,6 @@ export function CartDrawer({
             paymentDetails += ` (Troco para R$ ${changeFor})`;
         }
 
-        // Pass this back to parent via onSubmitOrder prop
-        // We need to change the prop signature in parent to accept this string, 
-        // OR we can hack it by appending to the FIRST item's notes if the parent is strict.
-        // Ideally, the parent component (GuestMenu) should receive this.
-        // For now, let's assume the parent can handle this extra data or we append it to the call.
-
-        // Since the interface is onSubmitOrder: () => void, we must modify the parent or use a hack.
-        // Let's modify the parent (GuestMenu) right after this.
-        // For now, we call the prop, but we need to EXPORT the payment state or modify the prop.
-        // Actually, the best way without breaking the interface immediately is to expose the payment state 
-        // via a callback or Ref to the parent, OR update the prop signature.
-        // Let's changing prop signature is cleaner.
-
         onSubmitOrder(paymentDetails);
     };
 
@@ -88,7 +77,7 @@ export function CartDrawer({
                 <div className="p-6 bg-white border-b border-gray-100">
                     <DialogHeader>
                         <DialogTitle className="text-2xl font-black text-gray-800">
-                            {step === "referral" ? "Revisar Pedido" : "Pagamento"}
+                            {step === "referral" ? t.guest.cart.title : "Pagamento"}
                         </DialogTitle>
                         <DialogDescription className="text-gray-500 font-medium pt-1">
                             {step === "referral" ? `Confira os itens para ${guestName}` : "Escolha como deseja pagar"}
@@ -165,7 +154,7 @@ export function CartDrawer({
 
                                 <div className="h-[1px] bg-gray-100" />
                                 <div className="flex items-center justify-between">
-                                    <span className="text-lg font-black text-gray-800">Total</span>
+                                    <span className="text-lg font-black text-gray-800">{t.guest.cart.total}</span>
                                     <span className="text-2xl font-black text-primary">{formatCurrency(finalTotal)}</span>
                                 </div>
                             </section>
@@ -259,14 +248,14 @@ export function CartDrawer({
                                 onClick={onClose}
                                 disabled={isSubmitting}
                             >
-                                Adicionar Mais
+                                {t.guest.product.add}
                             </Button>
                             <Button
                                 className="flex-[2] h-14 text-lg font-black bg-primary hover:bg-primary/90 text-white rounded-2xl shadow-xl shadow-primary/20"
                                 onClick={handleNextStep}
                                 disabled={isSubmitting || cart.length === 0}
                             >
-                                Continuar <ArrowRight className="ml-2 h-5 w-5" />
+                                {t.guest.cart.checkout} <ArrowRight className="ml-2 h-5 w-5" />
                             </Button>
                         </>
                     ) : (
@@ -277,7 +266,7 @@ export function CartDrawer({
                                 onClick={() => setStep("referral")}
                                 disabled={isSubmitting}
                             >
-                                Voltar
+                                {t.guest.back}
                             </Button>
                             <Button
                                 className="flex-[2] h-14 text-lg font-black bg-green-600 hover:bg-green-700 text-white rounded-2xl shadow-xl shadow-green-600/20"
@@ -287,7 +276,7 @@ export function CartDrawer({
                                 {isSubmitting ? (
                                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white" />
                                 ) : (
-                                    <span className="flex items-center gap-2">Confirmar Pedido <Check className="h-5 w-5" /></span>
+                                    <span className="flex items-center gap-2">Confirmar <Check className="h-5 w-5" /></span>
                                 )}
                             </Button>
                         </>
