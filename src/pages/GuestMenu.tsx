@@ -118,6 +118,7 @@ export default function GuestMenu() {
 
     localStorage.setItem(GUEST_STORAGE_KEY, JSON.stringify(guestInfo));
     setIsIdentified(true);
+    setIsIdentificationOpen(false); // Close the modal after identification
     toast.success(`Bem-vindo, ${guestInfo.name}!`);
   };
 
@@ -345,13 +346,14 @@ export default function GuestMenu() {
   return (
     <div className="min-h-screen bg-gray-50 pb-24 font-sans">
       {isIdentificationOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 overflow-y-auto flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/50 overflow-y-auto flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
           <div className="relative w-full max-w-md">
             <button
               onClick={() => setIsIdentificationOpen(false)}
-              className="absolute -top-12 right-0 text-white font-bold hover:text-gray-200 z-[60] bg-black/20 p-2 rounded-full backdrop-blur-sm"
+              className="absolute top-4 right-4 text-white hover:text-gray-200 z-[60] bg-black/20 hover:bg-black/40 p-2 rounded-full backdrop-blur-sm transition-all shadow-lg"
+              title="Fechar"
             >
-              ✕ Fechar
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 18 18" /></svg>
             </button>
             <GuestIdentification
               guestInfo={guestInfo}
