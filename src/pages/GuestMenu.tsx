@@ -24,6 +24,15 @@ import { FooterCart } from "@/components/guest/FooterCart";
 
 const GUEST_STORAGE_KEY = "guest_info";
 
+interface GuestInfoState {
+  name: string;
+  room: string;
+  phone: string;
+  latitude: number | null;
+  longitude: number | null;
+  address_complement?: string;
+}
+
 export default function GuestMenu() {
   const navigate = useNavigate();
   const { products, isLoading: isLoadingProducts } = useProducts();
@@ -39,12 +48,12 @@ export default function GuestMenu() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isIdentified, setIsIdentified] = useState(false);
   const [isIdentificationOpen, setIsIdentificationOpen] = useState(false);
-  const [guestInfo, setGuestInfo] = useState({
+  const [guestInfo, setGuestInfo] = useState<GuestInfoState>({
     name: "",
     room: "",
     phone: "",
-    latitude: null as number | null,
-    longitude: null as number | null,
+    latitude: null,
+    longitude: null,
     address_complement: ""
   });
 
@@ -366,7 +375,7 @@ export default function GuestMenu() {
       )}
       <GuestHeader
         guestInfo={guestInfo}
-        onChangeIdentity={() => setIsIdentified(false)}
+        onChangeIdentity={() => setIsIdentificationOpen(true)}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         isDeliveryMode={isDeliveryMode}
