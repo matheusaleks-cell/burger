@@ -123,55 +123,94 @@ export function GuestIdentification({ guestInfo, setGuestInfo, onIdentify, pousa
     }
 
     // FORM RENDER
-    const colorTheme = mode === 'delivery' ? 'emerald' : mode === 'pousada' ? 'blue' : 'orange';
+    const getThemeClasses = (m: OrderMode) => {
+        switch (m) {
+            case 'delivery':
+                return {
+                    bg: 'bg-emerald-50',
+                    border: 'border-emerald-100',
+                    iconBg: 'bg-emerald-100',
+                    iconColor: 'text-emerald-600',
+                    button: 'bg-emerald-600 hover:bg-emerald-700',
+                    ring: 'focus:ring-emerald-500'
+                };
+            case 'pousada':
+                return {
+                    bg: 'bg-blue-50',
+                    border: 'border-blue-100',
+                    iconBg: 'bg-blue-100',
+                    iconColor: 'text-blue-600',
+                    button: 'bg-blue-600 hover:bg-blue-700',
+                    ring: 'focus:ring-blue-500'
+                };
+            case 'local':
+            default:
+                return {
+                    bg: 'bg-orange-50',
+                    border: 'border-orange-100',
+                    iconBg: 'bg-orange-100',
+                    iconColor: 'text-orange-500', // orange-600 might be too dark for icon?
+                    button: 'bg-primary hover:bg-primary/90',
+                    ring: 'focus:ring-primary'
+                };
+        }
+    };
+
+    const theme = getThemeClasses(mode!);
     const TitleIcon = mode === 'delivery' ? Bike : mode === 'pousada' ? Home : Store;
 
     return (
-        <div className={`relative min-h-screen flex items-center justify-center p-4 bg-${colorTheme}-50/30`}>
+        <div className="relative min-h-screen flex items-center justify-center p-4 bg-gray-50/50">
             <div
                 className="absolute inset-0 z-0 bg-cover bg-center opacity-10"
                 style={{ backgroundImage: "url('/hero_background.png')" }}
             />
 
-            <Card className="z-10 w-full max-w-md bg-white shadow-2xl animate-scale-in">
-                <CardHeader className={`text-center border-b pb-6 bg-${colorTheme}-50/50`}>
+            <Card className="z-10 w-full max-w-md bg-white shadow-2xl animate-scale-in overflow-hidden border-none ring-1 ring-gray-100">
+                <CardHeader className={`relative text-center border-b pb-8 pt-8 ${theme.bg}`}>
                     <Button
                         variant="ghost"
-                        className="absolute left-4 top-4 text-gray-400 hover:text-gray-900"
+                        size="icon"
+                        className="absolute left-4 top-4 h-8 w-8 rounded-full bg-white/50 hover:bg-white text-gray-600 transition-colors"
                         onClick={() => setMode(null)}
                     >
-                        ← {t.guest.back}
+                        <span className="sr-only">{t.guest.back}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
                     </Button>
-                    <div className={`mx-auto p-4 rounded-full bg-${colorTheme}-100 mb-4 w-fit`}>
-                        <TitleIcon className={`h-8 w-8 text-${colorTheme}-600`} />
+
+                    <div className={`mx-auto p-5 rounded-full ${theme.iconBg} mb-4 w-fit shadow-sm`}>
+                        <TitleIcon className={`h-10 w-10 ${theme.iconColor}`} />
                     </div>
-                    <CardTitle className="text-2xl font-black uppercase text-gray-900">
+                    <CardTitle className="text-2xl font-black uppercase text-gray-900 tracking-tight">
                         {mode === 'delivery' ? t.guest.delivery : mode === 'local' ? t.guest.local : t.guest.pousada}
                     </CardTitle>
+                    <CardDescription className="text-gray-600 font-medium">
+                        Preencha seus dados para continuar
+                    </CardDescription>
                 </CardHeader>
-                <CardContent className="pt-6">
-                    <form onSubmit={handleSubmit} className="space-y-5">
+                <CardContent className="pt-8 p-6">
+                    <form onSubmit={handleSubmit} className="space-y-6">
                         {/* NAME */}
                         <div className="space-y-2">
-                            <Label>{t.guest.name_label}</Label>
+                            <Label className="text-sm font-bold text-gray-700">{t.guest.name_label}</Label>
                             <Input
                                 placeholder={t.guest.name_placeholder}
                                 value={guestInfo.name}
                                 onChange={(e) => setGuestInfo({ ...guestInfo, name: e.target.value })}
                                 required
-                                className="h-12 bg-gray-50 border-gray-200"
+                                className={`h-12 bg-gray-50 border-gray-200 transition-all ${theme.ring}`}
                             />
                         </div>
 
                         {/* PHONE */}
                         <div className="space-y-2">
-                            <Label>{t.guest.phone_label}</Label>
+                            <Label className="text-sm font-bold text-gray-700">{t.guest.phone_label}</Label>
                             <Input
                                 placeholder={t.guest.phone_placeholder}
                                 value={guestInfo.phone}
                                 onChange={(e) => setGuestInfo({ ...guestInfo, phone: e.target.value })}
                                 required
-                                className="h-12 bg-gray-50 border-gray-200"
+                                className={`h-12 bg-gray-50 border-gray-200 transition-all ${theme.ring}`}
                             />
                         </div>
 
@@ -179,20 +218,19 @@ export function GuestIdentification({ guestInfo, setGuestInfo, onIdentify, pousa
                         {mode === 'delivery' && (
                             <>
                                 <div className="space-y-2">
-                                    <Label>{t.guest.address_label}</Label>
+                                    <Label className="text-sm font-bold text-gray-700">{t.guest.address_label}</Label>
                                     <AddressSearch
                                         onSelect={handleAddressSelect}
                                         currentAddress={guestInfo.room}
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>{t.guest.complement_label}</Label>
+                                    <Label className="text-sm font-bold text-gray-700">{t.guest.complement_label}</Label>
                                     <Textarea
                                         placeholder={t.guest.complement_placeholder}
                                         value={guestInfo.address_complement || ""}
                                         onChange={(e) => setGuestInfo({ ...guestInfo, address_complement: e.target.value })}
-                                        className="bg-gray-50 border-gray-200 resize-none"
-                                        rows={3}
+                                        className={`bg-gray-50 border-gray-200 resize-none min-h-[80px] ${theme.ring}`}
                                     />
                                 </div>
                             </>
@@ -201,13 +239,13 @@ export function GuestIdentification({ guestInfo, setGuestInfo, onIdentify, pousa
                         {mode === 'pousada' && (
                             <>
                                 <div className="space-y-2">
-                                    <Label>{t.guest.pousada_label}</Label>
+                                    <Label className="text-sm font-bold text-gray-700">{t.guest.pousada_label}</Label>
                                     <Select
                                         value={selectedPousadaId}
                                         onValueChange={setSelectedPousadaId}
                                         required
                                     >
-                                        <SelectTrigger className="h-12 bg-gray-50 border-gray-200">
+                                        <SelectTrigger className={`h-12 bg-gray-50 border-gray-200 ${theme.ring}`}>
                                             <SelectValue placeholder={t.guest.pousada_placeholder} />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -218,13 +256,13 @@ export function GuestIdentification({ guestInfo, setGuestInfo, onIdentify, pousa
                                     </Select>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>{t.guest.room_label}</Label>
+                                    <Label className="text-sm font-bold text-gray-700">{t.guest.room_label}</Label>
                                     <Input
                                         placeholder={t.guest.room_placeholder}
                                         value={guestInfo.room}
                                         onChange={(e) => setGuestInfo({ ...guestInfo, room: e.target.value })}
                                         required
-                                        className="h-12 bg-gray-50 border-gray-200"
+                                        className={`h-12 bg-gray-50 border-gray-200 ${theme.ring}`}
                                     />
                                 </div>
                             </>
@@ -232,18 +270,21 @@ export function GuestIdentification({ guestInfo, setGuestInfo, onIdentify, pousa
 
                         {mode === 'local' && (
                             <div className="space-y-2">
-                                <Label>{t.guest.table_label}</Label>
+                                <Label className="text-sm font-bold text-gray-700">{t.guest.table_label}</Label>
                                 <Input
                                     placeholder={t.guest.table_placeholder}
                                     value={guestInfo.room}
                                     onChange={(e) => setGuestInfo({ ...guestInfo, room: e.target.value })}
                                     required
-                                    className="h-12 bg-gray-50 border-gray-200"
+                                    className={`h-12 bg-gray-50 border-gray-200 ${theme.ring}`}
                                 />
                             </div>
                         )}
 
-                        <Button type="submit" className={`w-full h-14 text-lg font-bold mt-4 shadow-lg text-white bg-${colorTheme}-600 hover:bg-${colorTheme}-700`}>
+                        <Button
+                            type="submit"
+                            className={`w-full h-14 text-lg font-black uppercase tracking-wide mt-4 shadow-xl shadow-black/5 text-white transition-all hover:scale-[1.02] active:scale-[0.98] ${theme.button}`}
+                        >
                             {t.guest.confirm_btn}
                         </Button>
                     </form>
