@@ -102,7 +102,7 @@ export function ProductList({
                                         </div>
 
                                         {/* Image Section */}
-                                        {product.image_url ? (
+                                        {product.image_url && (
                                             <div className="w-32 h-auto relative shrink-0">
                                                 <img
                                                     src={product.image_url}
@@ -110,17 +110,6 @@ export function ProductList({
                                                     className="absolute inset-0 w-full h-full object-cover"
                                                 />
                                                 <div className="absolute inset-0 bg-gradient-to-l from-transparent to-black/5" />
-                                            </div>
-                                        ) : (
-                                            <div className={`w-32 flex items-center justify-center shrink-0 relative overflow-hidden ${isDeliveryMode ? 'bg-emerald-50' : 'bg-gray-50'}`}>
-                                                <ImageIcon className={`h-8 w-8 relative z-10 ${isDeliveryMode ? 'text-emerald-200' : 'text-gray-300'}`} />
-                                                {/* Decorative pattern */}
-                                                <div className="absolute inset-0 opacity-[0.03]"
-                                                    style={{
-                                                        backgroundImage: "radial-gradient(#000 1px, transparent 1px)",
-                                                        backgroundSize: "10px 10px"
-                                                    }}
-                                                />
                                             </div>
                                         )}
                                     </Card>
