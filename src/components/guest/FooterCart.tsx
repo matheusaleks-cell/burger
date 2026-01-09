@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface FooterCartProps {
     onCheckout: () => void;
@@ -7,6 +8,7 @@ interface FooterCartProps {
 
 export function FooterCart({ onCheckout }: FooterCartProps) {
     const { cartItemsCount, cartTotal } = useCart();
+    const { t } = useLanguage();
 
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat("pt-BR", {
@@ -28,7 +30,7 @@ export function FooterCart({ onCheckout }: FooterCartProps) {
                         <div className="bg-white/20 h-9 w-9 flex items-center justify-center rounded-lg">
                             {cartItemsCount}
                         </div>
-                        <span>Ver Carrinho</span>
+                        <span>{t.guest.cart.view_cart}</span>
                     </div>
                     <span>{formatCurrency(cartTotal)}</span>
                 </Button>

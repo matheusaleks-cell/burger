@@ -8,6 +8,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Loader2, Minus, Plus } from "lucide-react";
 import { useProductAddons, ComplementGroup, ComplementItem } from "@/hooks/useProductAddons";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Product {
     id: string;
@@ -33,6 +34,7 @@ interface ProductModalProps {
 }
 
 export function ProductModal({ product, isOpen, onClose, onAddToCart }: ProductModalProps) {
+    const { t } = useLanguage();
     const [quantity, setQuantity] = useState(1);
     const [notes, setNotes] = useState("");
     const [selectedComplements, setSelectedComplements] = useState<SelectedComplement[]>([]);
@@ -137,7 +139,7 @@ export function ProductModal({ product, isOpen, onClose, onAddToCart }: ProductM
                         />
                     ) : (
                         <div className="flex items-center justify-center h-full text-gray-400">
-                            Sem imagem
+                            {t.guest.product.no_image}
                         </div>
                     )}
                     <button
@@ -176,14 +178,14 @@ export function ProductModal({ product, isOpen, onClose, onAddToCart }: ProductM
                                         <h3 className="font-bold text-gray-800">{group.name}</h3>
                                         <p className="text-sm text-gray-500">
                                             {group.min_quantity > 0 && group.max_quantity === 1 ? (
-                                                "Escolha 1 opção"
+                                                t.guest.product.choice_1
                                             ) : (
-                                                `Escolha ${group.min_quantity > 0 ? `pelo menos ${group.min_quantity}` : "até"} ${group.max_quantity ? group.max_quantity : "vários"}`
+                                                `${group.min_quantity > 0 ? `${t.guest.product.choice_min} ${group.min_quantity}` : `${t.guest.product.choice_max}`} ${group.max_quantity ? group.max_quantity : t.guest.product.choice_many}`
                                             )}
                                         </p>
                                     </div>
                                     {group.min_quantity > 0 && (
-                                        <span className="bg-gray-800 text-white text-xs px-2 py-1 rounded">Obrigatório</span>
+                                        <span className="bg-gray-800 text-white text-xs px-2 py-1 rounded">{t.guest.product.required}</span>
                                     )}
                                 </div>
 
@@ -228,7 +230,7 @@ export function ProductModal({ product, isOpen, onClose, onAddToCart }: ProductM
                                                     )}
                                                 </div>
                                                 <span className="font-medium text-gray-600">
-                                                    {item.price > 0 ? `+${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(item.price)}` : "Grátis"}
+                                                    {item.price > 0 ? `+${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(item.price)}` : t.guest.product.free}
                                                 </span>
                                             </div>
                                         )
@@ -238,7 +240,7 @@ export function ProductModal({ product, isOpen, onClose, onAddToCart }: ProductM
                         ))}
 
                         <div className="space-y-2">
-                            <Label htmlFor="notes">Observações</Label>
+                            <Label htmlFor="notes">{t.guest.product.notes}</Label>
                             <textarea
                                 id="notes"
                                 className="w-full min-h-[80px] p-3 rounded-md border border-gray-300 focus:ring-primary focus:border-primary"
@@ -253,7 +255,7 @@ export function ProductModal({ product, isOpen, onClose, onAddToCart }: ProductM
                 {/* Footer Actions */}
                 <div className="p-4 bg-white border-t border-gray-100 shrink-0">
                     <div className="flex items-center justify-between gap-4 mb-4">
-                        <span className="font-medium text-gray-500">Total do item</span>
+                        <span className="font-medium text-gray-500">{t.guest.product.item_total}</span>
                         <span className="text-xl font-bold">{new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(calculateTotal())}</span>
                     </div>
                     <div className="flex gap-4">
@@ -277,7 +279,7 @@ export function ProductModal({ product, isOpen, onClose, onAddToCart }: ProductM
                             onClick={handleAddToCart}
                             disabled={isLoading}
                         >
-                            Adicionar ao Carrinho
+                            {t.guest.product.add_to_cart}
                         </Button>
                     </div>
                 </div>

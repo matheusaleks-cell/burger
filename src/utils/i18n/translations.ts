@@ -38,7 +38,17 @@ export const translations = {
             product: {
                 add: "Adicionar",
                 added: "Adicionado!",
-                closed: "Fechado"
+                closed: "Fechado",
+                no_image: "Sem imagem",
+                choice_1: "Escolha 1 opção",
+                choice_min: "Escolha pelo menos",
+                choice_max: "até",
+                choice_many: "vários",
+                required: "Obrigatório",
+                notes: "Observações",
+                item_total: "Total do item",
+                add_to_cart: "Adicionar ao Carrinho",
+                free: "Grátis"
             },
             cart: {
                 title: "Seu Pedido",
@@ -87,7 +97,17 @@ export const translations = {
             product: {
                 add: "Add",
                 added: "Added!",
-                closed: "Closed"
+                closed: "Closed",
+                no_image: "No image",
+                choice_1: "Choose 1 option",
+                choice_min: "Choose at least",
+                choice_max: "up to",
+                choice_many: "many",
+                required: "Required",
+                notes: "Notes",
+                item_total: "Item Total",
+                add_to_cart: "Add to Cart",
+                free: "Free"
             },
             cart: {
                 title: "Your Order",
@@ -136,7 +156,17 @@ export const translations = {
             product: {
                 add: "Agregar",
                 added: "¡Agregado!",
-                closed: "Cerrado"
+                closed: "Cerrado",
+                no_image: "Sin imagen",
+                choice_1: "Elige 1 opción",
+                choice_min: "Elige al menos",
+                choice_max: "hasta",
+                choice_many: "varios",
+                required: "Obligatorio",
+                notes: "Observaciones",
+                item_total: "Total del ítem",
+                add_to_cart: "Agregar al Carrito",
+                free: "Gratis"
             },
             cart: {
                 title: "Tu Pedido",

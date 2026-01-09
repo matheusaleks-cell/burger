@@ -1,4 +1,5 @@
 import { Package } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Category {
     id: string;
@@ -14,6 +15,8 @@ interface CategoryNavProps {
 }
 
 export function CategoryNav({ categories, selectedCategory, setSelectedCategory, isDeliveryMode }: CategoryNavProps) {
+    const { t } = useLanguage();
+
     return (
         <div className={`container mx-auto px-4 py-3 pb-4 border-b sticky top-[72px] z-30 ${isDeliveryMode ? 'bg-emerald-50/50 border-emerald-100' : 'bg-white border-gray-50'}`}>
             <div className="flex gap-3 overflow-x-auto scrollbar-hide py-1">
@@ -27,7 +30,7 @@ export function CategoryNav({ categories, selectedCategory, setSelectedCategory,
           `}
                 >
                     <Package className="h-4 w-4" />
-                    <span>Todos</span>
+                    <span>{t.guest.categories.all}</span>
                 </button>
 
                 {categories.map((category) => (
