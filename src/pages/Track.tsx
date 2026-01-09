@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Search, Clock, CheckCircle2, Bell, Package, XCircle, Hotel, ArrowLeft } from "lucide-react";
+import { Search, Clock, CheckCircle2, Bell, Package, XCircle, UtensilsCrossed, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -153,8 +153,8 @@ export default function Track() {
             Voltar
           </Link>
           <div className="flex items-center gap-2">
-            <Hotel className="h-6 w-6 text-primary" />
-            <span className="font-display font-black text-xl tracking-tighter">POUSADA CARDÁPIO</span>
+            <UtensilsCrossed className="h-6 w-6 text-primary" />
+            <span className="font-display font-black text-xl tracking-tighter">BURGER NOW</span>
           </div>
         </div>
 

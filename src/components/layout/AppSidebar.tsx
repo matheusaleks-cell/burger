@@ -114,7 +114,7 @@ export function AppSidebar() {
           </div>
           <div>
             <h1 className="font-display text-xl font-bold tracking-tight text-white leading-none">BURGER</h1>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-indigo-200 font-semibold mt-1">Manager</p>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-indigo-200 font-semibold mt-1">NOW</p>
           </div>
         </div>
       </SidebarHeader>
