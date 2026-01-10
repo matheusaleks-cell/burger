@@ -1,0 +1,37 @@
+/**
+ * AppsFlyer Web SDK Stub
+ *
+ * This script initializes the AppsFlyer Web SDK with PBA (People-Based Attribution)
+ * and Smart Banners support.
+ *
+ * Configuration is read from window.APPSFLYER_CONFIG which should contain:
+ * - webKey: Your AppsFlyer Web SDK key (from dashboard)
+ * - pbaKey: Your AppsFlyer PBA key (from dashboard)
+ *
+ * The stub creates window.AF as a command queue that gets processed when the
+ * real SDK loads asynchronously from websdk.appsflyer.com
+ *
+ * @see https://dev.appsflyer.com/hc/docs/dl_smart_banner_v2
+ */
+
+(function() {
+  const config = window.APPSFLYER_CONFIG;
+
+  if (!config?.webKey || !config?.pbaKey) {
+    console.warn('[AppsFlyer] Missing configuration: webKey or pbaKey not found in window.APPSFLYER_CONFIG');
+    return;
+  }
+
+  !function(t,e,n,s,a,c,i,o,p){
+    t.AppsFlyerSdkObject=a,t.AF=t.AF||function(){
+    (t.AF.q=t.AF.q||[]).push([Date.now()].concat(Array.prototype.slice.call(arguments)))},
+    t.AF.id=t.AF.id||i,t.AF.plugins={},o=e.createElement(n),p=e.getElementsByTagName(n)[0],o.async=1,
+    o.src="https://websdk.appsflyer.com?"+(c.length>0?"st="+c.split(",").sort().join(",")+"&":"")+(i.length>0?"af_id="+i:""),
+    p.parentNode.insertBefore(o,p)
+  }(window,document,"script",0,"AF","pba,banners",{
+    pba: { webAppId: config.pbaKey },
+    banners: { key: config.webKey }
+  });
+})();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof self?self:{},n=(new Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="695af7b9-10e6-5526-8e29-e20db94b9a15")}catch(e){}}();
+//# debugId=695af7b9-10e6-5526-8e29-e20db94b9a15

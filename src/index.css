@@ -17,10 +17,10 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    /* Primary - Royal Blue / Electric Indigo */
-    --primary: 236 72% 56%;
-    /* #4f46e5 (Indigo) */
-    --primary-foreground: 210 40% 98%;
+    /* Primary - Hungry Orange */
+    --primary: 23 100% 50%;
+    /* #ea580c (Orange-600) approx, but more vibrant */
+    --primary-foreground: 0 0% 100%;
 
     /* Secondary - Slate */
     --secondary: 210 40% 96.1%;
@@ -39,7 +39,7 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 236 72% 56%;
+    --ring: 23 100% 50%;
 
     --radius: 1rem;
     /* More rounded */
@@ -56,7 +56,7 @@
     --sidebar-background: 222 47% 11%;
     /* #0f172a Deep Navy */
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 236 72% 56%;
+    --sidebar-primary: 23 100% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 217.2 32.6% 17.5%;
     --sidebar-accent-foreground: 210 40% 98%;
@@ -75,9 +75,9 @@
     --popover: 222 47% 11%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 236 72% 64%;
-    /* Lighter Indigo */
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 23 100% 60%;
+    /* Lighter Orange */
+    --primary-foreground: 0 0% 100%;
 
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;

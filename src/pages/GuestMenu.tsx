@@ -383,38 +383,46 @@ export default function GuestMenu() {
       />
 
       <div className="container mx-auto px-4 py-2 space-y-3">
-        {/* Store Status Banner */}
-        {isStoreClosed && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3 text-red-800 shadow-sm animate-pulse">
-            <Lock className="h-6 w-6 shrink-0" />
-            <div>
-              <h3 className="font-bold">Loja Fechada</h3>
-              <p className="text-sm">No momento não estamos aceitando pedidos.</p>
-              {currentPousada?.opening_hours && <p className="text-xs mt-1 font-medium bg-white/50 px-2 py-1 rounded inline-block">Horário: {currentPousada.opening_hours}</p>}
+        {/* Store Status Banner & Header Info */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div className={`h-3 w-3 rounded-full ${isStoreClosed ? 'bg-red-500 animate-pulse' : 'bg-green-500 animate-pulse'}`}></div>
+              <span className={`font-bold text-sm ${isStoreClosed ? 'text-red-600' : 'text-green-600'}`}>
+                {isStoreClosed ? 'LOJA FECHADA' : 'LOJA ABERTA'}
+              </span>
             </div>
+            {!isStoreClosed && (
+              <div className="flex items-center gap-1.5 text-gray-500 text-sm font-medium bg-gray-50 px-2 py-1 rounded-md">
+                <Clock className="h-4 w-4 text-orange-500" />
+                <span>30-45 min</span>
+              </div>
+            )}
           </div>
-        )}
 
-        {currentPousada && !isStoreClosed && (
-          <div className="bg-white border border-gray-100 rounded-lg p-3 text-sm flex justify-between items-center text-gray-600 shadow-sm">
-            <span className="flex items-center gap-2 text-primary font-medium">📍 {currentPousada.name}</span>
-            <button onClick={resetMode} className="underline text-xs font-bold hover:text-primary" title="Trocar Pousada">
-              Trocar
-            </button>
-          </div>
-        )}
+          {currentPousada && !isStoreClosed && (
+            <div className="flex items-center justify-between text-sm text-gray-600 border-t border-gray-100 pt-3">
+              <span className="flex items-center gap-1.5">
+                <Store className="h-4 w-4 text-primary" />
+                {currentPousada.name}
+              </span>
+              <button onClick={resetMode} className="text-xs font-bold text-primary hover:underline">
+                Alterar
+              </button>
+            </div>
+          )}
 
-        {isDeliveryMode && !isStoreClosed && (
-          <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-sm flex justify-between items-center text-emerald-900 shadow-sm">
-            <span className="flex items-center gap-2">🛵 <strong>Modo Delivery</strong></span>
-            <button onClick={resetMode} className="underline text-xs font-bold text-emerald-600 hover:text-emerald-800" title="Voltar para seleção">
-              Trocar
-            </button>
-          </div>
-        )}
+          {isDeliveryMode && !isStoreClosed && (
+            <div className="flex items-center justify-between text-sm text-emerald-700 bg-emerald-50/50 rounded-lg p-2 mt-2 border border-emerald-100">
+              <span className="flex items-center gap-2 font-medium">🛵 Delivery</span>
+              <button onClick={resetMode} className="text-xs font-bold hover:underline">Alterar</button>
+            </div>
+          )}
+        </div>
 
         {/* Promo Carousel */}
         {!isStoreClosed && (!pousadas.find(p => p.is_hq) || pousadas.find(p => p.is_hq)?.show_banners !== false) && <PromoCarousel />}
+
       </div>
 
       {!isStoreClosed && (

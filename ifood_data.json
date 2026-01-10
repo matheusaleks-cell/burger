@@ -1,0 +1,19 @@
+[
+  {
+    "category": "Geral (Importado)",
+    "items": [
+      {
+        "name": "Now Bacon",
+        "description": "Pão de brioche, um delicioso e suculento hamburguer artesanal de 120g acompanhado de queijo cheddar duplo, fatias de bacon (perfeito pra você que é apaixonado por bacon) e nossa incrível maionese verde.\n\n*Para evitar desperdício, marque na opção abaixo se desejar sachês*",
+        "price": "32.99-32.99",
+        "image_url": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/02bca55d-f766-4768-8110-d3f670339c23/202509031707_s2w2_c.png"
+      },
+      {
+        "name": "Cheese Now",
+        "description": "Pão de brioche, uma deliciosa e suculento hamburguer de 150g acompanhado de queijo cheddar duplo (no momento está sendo servido com queijo Prato) e molho especial da casa.\n\nVocê come esse burger feliz da vida... Mas sobra espaço para uma batata crocante.",
+        "price": "29.99-29.99",
+        "image_url": "https://static.ifood-static.com.br/image/upload/t_thumbnail/logosgde/02bca55d-f766-4768-8110-d3f670339c23/202509031707_s2w2_c.png"
+      }
+    ]
+  }
+]
