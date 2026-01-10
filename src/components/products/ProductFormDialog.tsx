@@ -286,39 +286,7 @@ export const ProductFormDialog = ({
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="availability_status">Status de Disponibilidade</Label>
-                                        <Select
-                                            value={formData.availability_status}
-                                            onValueChange={(value) =>
-                                                setFormData({ ...formData, availability_status: value })
-                                            }
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="available">Disponível</SelectItem>
-                                                <SelectItem value="unavailable">Esgotado (Indisponível)</SelectItem>
-                                                <SelectItem value="paused">Pausado (Oculto)</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="daily_stock">Estoque Diário</Label>
-                                        <Input
-                                            id="daily_stock"
-                                            type="number"
-                                            min="0"
-                                            value={formData.daily_stock}
-                                            onChange={(e) =>
-                                                setFormData({ ...formData, daily_stock: e.target.value })
-                                            }
-                                            placeholder="Infinito se vazio"
-                                        />
-                                    </div>
-                                </div>
+
 
                                 <div className="space-y-2">
                                     <Label htmlFor="external_id">ID Externo (PDV)</Label>
@@ -437,6 +405,46 @@ export const ProductFormDialog = ({
                                         </ScrollArea>
                                     </div>
                                 )}
+
+                                <div className="grid grid-cols-2 gap-4 border-t pt-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="availability_status_tab">Status de Disponibilidade</Label>
+                                        <Select
+                                            value={formData.availability_status}
+                                            onValueChange={(value) =>
+                                                setFormData({ ...formData, availability_status: value })
+                                            }
+                                        >
+                                            <SelectTrigger id="availability_status_tab">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="available">Disponível</SelectItem>
+                                                <SelectItem value="unavailable">Esgotado (Indisponível)</SelectItem>
+                                                <SelectItem value="paused">Pausado (Oculto)</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <p className="text-xs text-muted-foreground">
+                                            Define se o produto pode ser pedido no momento.
+                                        </p>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="daily_stock_tab">Estoque Diário</Label>
+                                        <Input
+                                            id="daily_stock_tab"
+                                            type="number"
+                                            min="0"
+                                            value={formData.daily_stock}
+                                            onChange={(e) =>
+                                                setFormData({ ...formData, daily_stock: e.target.value })
+                                            }
+                                            placeholder="Infinito se vazio"
+                                        />
+                                        <p className="text-xs text-muted-foreground">
+                                            Reinicia automaticamente todo dia.
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
                         </TabsContent>
 
