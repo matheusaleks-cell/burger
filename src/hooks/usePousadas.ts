@@ -22,6 +22,9 @@ export interface Pousada {
     estimated_time_max?: number;
     accepted_payment_methods?: string[];
     show_banners?: boolean;
+    first_order_discount_enabled?: boolean;
+    first_order_discount_type?: 'percentage' | 'fixed' | 'delivery_free';
+    first_order_discount_value?: number;
 }
 
 export type PousadaInput = Omit<Pousada, "id">;

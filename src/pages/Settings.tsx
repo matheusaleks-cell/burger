@@ -89,6 +89,9 @@ export default function Settings() {
     estimated_time_min: 30,
     estimated_time_max: 45,
     accepted_payment_methods: ["pix", "card", "cash"],
+    first_order_discount_enabled: false,
+    first_order_discount_type: "delivery_free",
+    first_order_discount_value: 0,
   });
 
   useEffect(() => {
@@ -103,8 +106,12 @@ export default function Settings() {
         accepted_payment_methods: currentStore.accepted_payment_methods ?? [
           "pix",
           "card",
+          "card",
           "cash",
         ],
+        first_order_discount_enabled: currentStore.first_order_discount_enabled ?? false,
+        first_order_discount_type: currentStore.first_order_discount_type ?? "delivery_free",
+        first_order_discount_value: currentStore.first_order_discount_value ?? 0,
       });
     }
   }, [currentStore]);
@@ -115,6 +122,7 @@ export default function Settings() {
       await updatePousada.mutateAsync({
         id: currentStore.id,
         ...formData,
+        first_order_discount_type: formData.first_order_discount_type as any, // Cast to satisfy strict union type
       });
       // Success toast is handled by query mutation logic typically, 
       // but if not, usePousadas logic has success toast.
@@ -469,43 +477,77 @@ export default function Settings() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="flex items-center justify-between p-4 border rounded-lg bg-slate-50 opacity-60">
+              <div className="flex items-center justify-between p-4 border rounded-lg bg-emerald-50 border-emerald-100">
                 <div className="space-y-0.5">
-                  <Label className="text-base flex items-center gap-2">
-                    Primeiro Pedido (Inativo)
+                  <Label className="text-base flex items-center gap-2 text-emerald-900">
+                    Primeiro Pedido
                   </Label>
-                  <p className="text-sm text-muted-foreground">
-                    Oferecer benefício para novos clientes (identificados pelo celular).
+                  <p className="text-sm text-emerald-700">
+                    Oferecer benefício automático para novos clientes (identificados pelo celular).
                   </p>
                 </div>
-                <Switch disabled checked={false} />
+                <Switch
+                  checked={formData.first_order_discount_enabled}
+                  onCheckedChange={(c) =>
+                    setFormData({ ...formData, first_order_discount_enabled: c })
+                  }
+                />
               </div>
 
-              <div className="pl-6 border-l-2 border-slate-200 ml-2 space-y-4 opacity-50 pointer-events-none">
+              <div className={`pl-6 border-l-2 border-emerald-200 ml-2 space-y-4 transition-all ${!formData.first_order_discount_enabled ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
                 <div className="space-y-2">
                   <Label>Tipo de Benefício</Label>
-                  <Select disabled>
+                  <Select
+                    value={formData.first_order_discount_type || 'delivery_free'}
+                    onValueChange={(val: any) =>
+                      setFormData({ ...formData, first_order_discount_type: val })
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="frete_gratis">Frete Grátis</SelectItem>
-                      <SelectItem value="desconto_pct">Desconto (%)</SelectItem>
-                      <SelectItem value="brinde">Brinde Surpresa</SelectItem>
+                      <SelectItem value="delivery_free">Frete Grátis</SelectItem>
+                      <SelectItem value="percentage">Desconto em % (Porcentagem)</SelectItem>
+                      <SelectItem value="fixed">Desconto Fixo (R$)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label>Valor / Detalhes</Label>
-                  <Input disabled placeholder="Ex: 10% ou 'Sobremesa Grátis'" />
-                </div>
+
+                {formData.first_order_discount_type !== 'delivery_free' && (
+                  <div className="space-y-2">
+                    <Label>Valor do Desconto</Label>
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        placeholder="Ex: 10"
+                        value={formData.first_order_discount_value || ''}
+                        onChange={(e) =>
+                          setFormData({ ...formData, first_order_discount_value: Number(e.target.value) })
+                        }
+                      />
+                      <div className="absolute right-3 top-2.5 text-gray-400 text-sm font-bold">
+                        {formData.first_order_discount_type === 'percentage' ? '%' : 'R$'}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              <div className="p-4 bg-yellow-50 text-yellow-800 rounded-md text-sm border border-yellow-200">
+              <div className="p-4 bg-blue-50 text-blue-800 rounded-md text-sm border border-blue-200 flex gap-2">
+                <Gift className="h-5 w-5 shrink-0" />
                 <p>
-                  <strong>Em breve:</strong> Esta funcionalidade permitirá criar regras automáticas para fidelizar clientes novos.
+                  O desconto será aplicado automaticamente no carrinho quando um cliente com número de celular novo fizer um pedido.
                 </p>
               </div>
+
+              <Button
+                onClick={handleSaveStore}
+                disabled={updatePousada.isPending}
+                className="w-full md:w-auto gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+              >
+                <Save className="h-4 w-4" /> Salvar Configurações de Fidelidade
+              </Button>
 
             </CardContent>
           </Card>

@@ -204,6 +204,8 @@ export default function GuestMenu() {
 
       // 0. Upsert Customer Logic
       let customerId = null;
+      let isNewCustomer = false;
+
       try {
         const cleanPhone = guestInfo.phone.replace(/\D/g, "");
         // Try to find existing customer by phone
@@ -231,6 +233,7 @@ export default function GuestMenu() {
             .update(customerData)
             .eq("id", customerId);
         } else {
+          isNewCustomer = true; // Flag as new customer
           // Insert new
           const { data: newCustomer, error: createError } = await supabase
             .from("customers")
@@ -247,14 +250,49 @@ export default function GuestMenu() {
         // We continue even if customer creation fails, to not block the order
       }
 
+      // --- FIRST ORDER REWARD LOGIC ---
+      let discountAmount = 0;
+      let appliedDeliveryFee = finalFee;
+
+      // Get HQ or Current Pousada settings (Assuming Rewards are set on HQ/Global level usually, or per store)
+      // If delivery, use HQ settings. If local, use currentPousada settings.
+      const rewardConfigStore = isDeliveryMode ? pousadas.find(p => p.is_hq) : currentPousada;
+
+      if (isNewCustomer && rewardConfigStore?.first_order_discount_enabled) {
+        const { first_order_discount_type, first_order_discount_value } = rewardConfigStore;
+
+        console.log("Applying First Order Reward:", first_order_discount_type, first_order_discount_value);
+
+        if (first_order_discount_type === 'delivery_free') {
+          if (appliedDeliveryFee > 0) {
+            discountAmount = appliedDeliveryFee;
+            appliedDeliveryFee = 0; // Free delivery
+            orderNotes += ` | 🎁 FRETE GRÁTIS (1ª Compra)`;
+            toast.success("Parabéns! Você ganhou Frete Grátis na sua primeira compra!");
+          }
+        } else if (first_order_discount_type === 'percentage' && first_order_discount_value) {
+          const discount = (cartTotal * (first_order_discount_value / 100));
+          discountAmount = discount;
+          orderNotes += ` | 🎁 DESCONTO DE ${first_order_discount_value}% (1ª Compra)`;
+          toast.success(`Parabéns! Você ganhou ${first_order_discount_value}% de desconto na sua primeira compra!`);
+        } else if (first_order_discount_type === 'fixed' && first_order_discount_value) {
+          discountAmount = first_order_discount_value;
+          orderNotes += ` | 🎁 DESCONTO DE R$ ${first_order_discount_value} (1ª Compra)`;
+          toast.success(`Parabéns! Você ganhou R$ ${first_order_discount_value} de desconto na sua primeira compra!`);
+        }
+      }
+
+      // Recalculate Total
+      const finalTotal = Math.max(0, cartTotal + appliedDeliveryFee - (rewardConfigStore?.first_order_discount_type !== 'delivery_free' ? discountAmount : 0));
+
       // Create the order in DB (for Panel/KDS)
       const { data: orderData, error: orderError } = await supabase
         .from("orders")
         .insert({
           order_type: finalOrderType,
           room_number: guestInfo.room, // Contains Address if delivery, Room # if pousada
-          total: totalWithFee,
-          delivery_fee: finalFee,
+          total: finalTotal, // Use new total with discount
+          delivery_fee: appliedDeliveryFee, // Use new delivery fee
           pousada_id: targetPousadaId,
           notes: orderNotes,
           status: "pending",
@@ -316,8 +354,16 @@ export default function GuestMenu() {
       });
 
       message += `--------------------------------\n`;
-      if (finalFee > 0) message += `Taxa de Entrega: R$ ${finalFee.toFixed(2)}\n`;
-      message += `*TOTAL: R$ ${totalWithFee.toFixed(2)}*\n`;
+      message += `--------------------------------\n`;
+      if (appliedDeliveryFee > 0) message += `Taxa de Entrega: R$ ${appliedDeliveryFee.toFixed(2)}\n`;
+      if (discountAmount > 0) {
+        if (rewardConfigStore?.first_order_discount_type === 'delivery_free') {
+          message += `🎁 Frete Grátis (1ª Compra)\n`;
+        } else {
+          message += `🎁 Desconto (1ª Compra): -R$ ${discountAmount.toFixed(2)}\n`;
+        }
+      }
+      message += `*TOTAL: R$ ${finalTotal.toFixed(2)}*\n`;
       message += `--------------------------------\n`;
       message += `Acompanhar Pedido: ${window.location.origin}/guest/track/${orderData.order_number}`;
 
