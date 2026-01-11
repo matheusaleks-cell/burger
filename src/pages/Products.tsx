@@ -8,10 +8,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, LayoutGrid, List } from "lucide-react";
 import { useProducts, Product } from "@/hooks/useProducts";
 import { useCategories } from "@/hooks/useCategories";
 import { ProductGrid } from "@/components/products/ProductGrid";
+import { ProductListView } from "@/components/products/ProductListView";
 import { ProductFormDialog } from "@/components/products/ProductFormDialog";
 
 export default function Products() {
@@ -27,6 +28,7 @@ export default function Products() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("list"); // Default to list view as per request
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
@@ -131,9 +133,9 @@ export default function Products() {
         />
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        <div className="relative flex-1">
+      {/* Filters & View Toggle */}
+      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 items-center">
+        <div className="relative flex-1 w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Buscar por nome..."
@@ -142,28 +144,62 @@ export default function Products() {
             className="pl-10 bg-gray-50 border-gray-200 focus:bg-white transition-colors"
           />
         </div>
-        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-          <SelectTrigger className="w-full sm:w-48 bg-gray-50 border-gray-200">
-            <SelectValue placeholder="Categoria" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas as categorias</SelectItem>
-            {categories.map((category) => (
-              <SelectItem key={category.id} value={category.id}>
-                {category.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <SelectTrigger className="w-full sm:w-48 bg-gray-50 border-gray-200">
+              <SelectValue placeholder="Categoria" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as categorias</SelectItem>
+              {categories.map((category) => (
+                <SelectItem key={category.id} value={category.id}>
+                  {category.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <div className="flex items-center border border-gray-200 rounded-lg bg-gray-50 p-1">
+            <Button
+              variant={viewMode === "grid" ? "default" : "ghost"}
+              size="icon"
+              className="h-8 w-8 rounded-md"
+              onClick={() => setViewMode("grid")}
+              title="Visualização em Grade"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "list" ? "default" : "ghost"}
+              size="icon"
+              className="h-8 w-8 rounded-md"
+              onClick={() => setViewMode("list")}
+              title="Visualização em Lista"
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
       </div>
 
-      <ProductGrid
-        products={filteredProducts}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onToggleActive={handleToggleActive}
-        onToggleAvailable={handleToggleAvailable}
-      />
+      {viewMode === "list" ? (
+        <ProductListView
+          products={filteredProducts}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onToggleActive={handleToggleActive}
+          onToggleAvailable={handleToggleAvailable}
+        />
+      ) : (
+        <ProductGrid
+          products={filteredProducts}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onToggleActive={handleToggleActive}
+          onToggleAvailable={handleToggleAvailable}
+        />
+      )}
     </div>
   );
 }
