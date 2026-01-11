@@ -20,6 +20,8 @@ export interface Product {
     availability_status?: string;
     daily_stock?: number | null;
     available_all: boolean;
+    available_for_delivery: boolean;
+    available_for_pousada: boolean;
     categories?: Category;
     pousada_ids?: string[]; // IDs of pousadas where this product is available (if !available_all)
     product_pousadas?: { pousada_id: string }[]; // Raw join data
@@ -48,6 +50,8 @@ export const useProducts = () => {
             return (data as any[]).map(p => ({
                 ...p,
                 is_available: p.availability_status === 'available' || !p.availability_status,
+                available_for_delivery: p.available_for_delivery ?? true,
+                available_for_pousada: p.available_for_pousada ?? true,
                 pousada_ids: p.product_pousadas?.map((pp: any) => pp.pousada_id) || []
             })) as Product[];
         },

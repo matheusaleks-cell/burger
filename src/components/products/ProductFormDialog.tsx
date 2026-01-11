@@ -57,6 +57,8 @@ export const ProductFormDialog = ({
         is_active: true,
         is_available: true,
         available_all: true,
+        available_for_delivery: true,
+        available_for_pousada: true,
         prep_time_minutes: "15",
         external_id: "",
         promotional_price: "",
@@ -90,6 +92,8 @@ export const ProductFormDialog = ({
                     is_active: product.is_active,
                     is_available: product.is_available ?? true,
                     available_all: product.available_all ?? true,
+                    available_for_delivery: product.available_for_delivery ?? true,
+                    available_for_pousada: product.available_for_pousada ?? true,
                     prep_time_minutes: product.prep_time_minutes.toString(),
                     external_id: product.external_id || "",
                     promotional_price: product.promotional_price?.toString() || "",
@@ -108,6 +112,8 @@ export const ProductFormDialog = ({
                     is_active: true,
                     is_available: true,
                     available_all: true,
+                    available_for_delivery: true,
+                    available_for_pousada: true,
                     prep_time_minutes: "15",
                     external_id: "",
                     promotional_price: "",
@@ -162,6 +168,8 @@ export const ProductFormDialog = ({
             is_active: formData.is_active,
             is_available: formData.is_available,
             available_all: formData.available_all,
+            available_for_delivery: formData.available_for_delivery,
+            available_for_pousada: formData.available_for_pousada,
             prep_time_minutes: parseInt(formData.prep_time_minutes),
             display_order: product?.display_order || 0,
             external_id: formData.external_id || null,
@@ -375,6 +383,34 @@ export const ProductFormDialog = ({
                                     />
                                 </div>
 
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="flex flex-col space-y-2 p-4 border rounded-lg bg-emerald-50/50 border-emerald-100">
+                                        <Label className="font-bold flex items-center gap-2 text-emerald-800">
+                                            <span className="bg-emerald-100 p-1 rounded">🛵</span> Disponível no Delivery?
+                                        </Label>
+                                        <div className="flex items-center gap-2">
+                                            <Switch
+                                                checked={formData.available_for_delivery}
+                                                onCheckedChange={(checked) => setFormData({ ...formData, available_for_delivery: checked })}
+                                            />
+                                            <span className="text-sm text-muted-foreground">{formData.available_for_delivery ? "Sim" : "Não"}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col space-y-2 p-4 border rounded-lg bg-blue-50/50 border-blue-100">
+                                        <Label className="font-bold flex items-center gap-2 text-blue-800">
+                                            <span className="bg-blue-100 p-1 rounded">🍽️</span> Disponível na Mesa?
+                                        </Label>
+                                        <div className="flex items-center gap-2">
+                                            <Switch
+                                                checked={formData.available_for_pousada}
+                                                onCheckedChange={(checked) => setFormData({ ...formData, available_for_pousada: checked })}
+                                            />
+                                            <span className="text-sm text-muted-foreground">{formData.available_for_pousada ? "Sim" : "Não"}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 {!formData.available_all && (
                                     <div className="rounded-md border p-4 bg-muted/10">
                                         <Label className="mb-4 block text-base">Selecione as pousadas onde este produto estará disponível:</Label>
@@ -456,6 +492,6 @@ export const ProductFormDialog = ({
                     </form>
                 </Tabs>
             </DialogContent>
-        </Dialog>
+        </Dialog >
     );
 };

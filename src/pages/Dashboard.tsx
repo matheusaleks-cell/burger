@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, ShoppingCart } from "lucide-react";
 import { useState } from "react";
 import { PopularItemsCard } from "@/components/dashboard/PopularItemsCard";
+import { RevenueChart } from "@/components/dashboard/RevenueChart";
 
 export default function Dashboard() {
   const { stats, recentOrders, popularItems, isLoading } = useDashboardStats();
@@ -50,7 +51,11 @@ export default function Dashboard() {
       <CreateOrderDialog open={isOrderDialogOpen} onOpenChange={setIsOrderDialogOpen} />
 
       <StatsGrid stats={stats} />
-      <OrderStatusGrid stats={stats} />
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <RevenueChart />
+        <OrderStatusGrid stats={stats} />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">

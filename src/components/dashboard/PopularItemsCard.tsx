@@ -17,7 +17,7 @@ export function PopularItemsCard({ items, isLoading }: PopularItemsCardProps) {
         <Card className="col-span-1 border-gray-100 shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-base font-bold text-gray-800 flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-rose-500" />
+                    <TrendingUp className="w-5 h-5 text-primary" />
                     Mais Vendidos
                 </CardTitle>
                 <Link to="/products" className="text-xs font-bold text-primary hover:underline flex items-center gap-1">
@@ -34,9 +34,9 @@ export function PopularItemsCard({ items, isLoading }: PopularItemsCardProps) {
                         items.map((item, index) => (
                             <div key={item.id} className="flex items-center justify-between group">
                                 <div className="flex items-center gap-3">
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${index === 0 ? 'bg-yellow-100 text-yellow-700' :
-                                        index === 1 ? 'bg-gray-100 text-gray-600' :
-                                            index === 2 ? 'bg-orange-100 text-orange-700' : 'bg-slate-50 text-slate-500'
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${index === 0 ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20' :
+                                        index === 1 ? 'bg-primary/20 text-primary' :
+                                            index === 2 ? 'bg-primary/10 text-primary' : 'bg-slate-50 text-slate-500'
                                         }`}>
                                         {index + 1}º
                                     </div>

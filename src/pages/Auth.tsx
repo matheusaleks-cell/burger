@@ -66,8 +66,8 @@ export default function Auth() {
 
       <Card className="w-full max-w-md glass-card animate-slide-up relative">
         <CardHeader className="text-center space-y-4">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
-            <Hotel className="h-8 w-8" />
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-xl shadow-primary/20 overflow-hidden group hover:scale-105 transition-transform duration-500">
+            <img src="/logo.png" alt="Burger Pousada" className="h-full w-full object-cover" />
           </div>
           <div>
             <CardTitle className="text-3xl font-display font-black tracking-tighter">POUSADA ADMIN</CardTitle>

@@ -406,8 +406,12 @@ export default function GuestMenu() {
     // "pousada_ids" means "Restricted to specific pousadas".
 
     // Logic:
-    // 1. If product is available_all => Show
-    // 2. If product is restricted (available_all=false):
+    // 1. Context Filter (Delivery vs Pousada)
+    if (isDeliveryMode && !product.available_for_delivery) return false;
+    if (!isDeliveryMode && !product.available_for_pousada) return false;
+
+    // 2. If product is available_all => Show
+    // 3. If product is restricted (available_all=false):
     //    - Show ONLY if currentPousada.id is in pousada_ids
 
     const isGlobal = product.available_all;
@@ -453,7 +457,7 @@ export default function GuestMenu() {
         setSearchQuery={setSearchQuery}
         isDeliveryMode={isDeliveryMode}
         isHQ={!!currentPousada?.is_hq}
-        logoUrl="/hero_background.png" // Temporary placeholder
+        logoUrl="/logo.png"
       />
 
       <div className="container mx-auto px-4 py-2 space-y-3">
