@@ -4,8 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { MapPin, Phone, Store, Utensils, Home, Bike } from "lucide-react";
-import { AddressSearch } from "./AddressSearch";
+import { AddressSearch } from "./AddressSearch"; // keeping for latitude/longitude if needed later
 import { Pousada } from "@/hooks/usePousadas";
+import { Neighborhood } from "@/hooks/useNeighborhoods";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -16,7 +17,11 @@ interface GuestInfo {
     phone: string;
     latitude: number | null;
     longitude: number | null;
-    address_complement?: string; // New field
+    address_complement?: string;
+    street?: string;
+    number?: string;
+    neighborhood_id?: string;
+    reference?: string;
 }
 
 interface GuestIdentificationProps {
@@ -24,17 +29,33 @@ interface GuestIdentificationProps {
     setGuestInfo: (info: GuestInfo) => void;
     onIdentify: (e: React.FormEvent, selectedPousadaId?: string, isDelivery?: boolean) => void;
     pousadas: Pousada[];
+    neighborhoods?: Neighborhood[];
 }
 
 type OrderMode = 'delivery' | 'local' | 'pousada';
 
-export function GuestIdentification({ guestInfo, setGuestInfo, onIdentify, pousadas }: GuestIdentificationProps) {
+export function GuestIdentification({ guestInfo, setGuestInfo, onIdentify, pousadas, neighborhoods = [] }: GuestIdentificationProps) {
     const [mode, setMode] = useState<OrderMode | null>(null);
     const [selectedPousadaId, setSelectedPousadaId] = useState<string>("");
 
     // Find HQ for 'local' mode
     const hqPousada = pousadas.find(p => p.is_hq);
     const { t } = useLanguage();
+
+    const updateAddressString = (newInfo: GuestInfo) => {
+        if (mode === 'delivery') {
+            const hood = neighborhoods.find(n => n.id === newInfo.neighborhood_id);
+            const hoodName = hood ? hood.name : "";
+            const fullAddress = `${newInfo.street || ""}, ${newInfo.number || ""} - ${hoodName} (${newInfo.reference || ""})`;
+            return { ...newInfo, room: fullAddress };
+        }
+        return newInfo;
+    };
+
+    const handleFieldChange = (field: keyof GuestInfo, value: string) => {
+        const updated = { ...guestInfo, [field]: value };
+        setGuestInfo(updateAddressString(updated));
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -50,15 +71,6 @@ export function GuestIdentification({ guestInfo, setGuestInfo, onIdentify, pousa
         }
 
         onIdentify(e, targetPousadaId, isDelivery);
-    };
-
-    const handleAddressSelect = (address: string, lat: number, lon: number) => {
-        setGuestInfo({
-            ...guestInfo,
-            room: address, // In delivery mode, room acts as address string
-            latitude: lat,
-            longitude: lon
-        });
     };
 
     // Render Mode Selection or Form
@@ -149,7 +161,7 @@ export function GuestIdentification({ guestInfo, setGuestInfo, onIdentify, pousa
                     bg: 'bg-orange-50',
                     border: 'border-orange-100',
                     iconBg: 'bg-orange-100',
-                    iconColor: 'text-orange-500', // orange-600 might be too dark for icon?
+                    iconColor: 'text-orange-500',
                     button: 'bg-primary hover:bg-primary/90',
                     ring: 'focus:ring-primary'
                 };
@@ -218,19 +230,53 @@ export function GuestIdentification({ guestInfo, setGuestInfo, onIdentify, pousa
                         {mode === 'delivery' && (
                             <>
                                 <div className="space-y-2">
-                                    <Label className="text-sm font-bold text-gray-700">{t.guest.address_label}</Label>
-                                    <AddressSearch
-                                        onSelect={handleAddressSelect}
-                                        currentAddress={guestInfo.room}
-                                    />
+                                    <Label className="text-sm font-bold text-gray-700">Selecione seu Bairro</Label>
+                                    <Select
+                                        value={guestInfo.neighborhood_id || ""}
+                                        onValueChange={(val) => handleFieldChange('neighborhood_id', val)}
+                                        required
+                                    >
+                                        <SelectTrigger className={`h-12 bg-gray-50 border-gray-200 ${theme.ring}`}>
+                                            <SelectValue placeholder="Selecione..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {neighborhoods.map((hood) => (
+                                                <SelectItem key={hood.id} value={hood.id}>
+                                                    {hood.name} (R$ {Number(hood.fee).toFixed(2)})
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="grid grid-cols-3 gap-2">
+                                    <div className="col-span-2 space-y-2">
+                                        <Label className="text-sm font-bold text-gray-700">Rua / Logradouro</Label>
+                                        <Input
+                                            value={guestInfo.street || ""}
+                                            onChange={(e) => handleFieldChange('street', e.target.value)}
+                                            required
+                                            placeholder="Nome da Rua"
+                                            className={`h-12 bg-gray-50 border-gray-200 ${theme.ring}`}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-sm font-bold text-gray-700">Número</Label>
+                                        <Input
+                                            value={guestInfo.number || ""}
+                                            onChange={(e) => handleFieldChange('number', e.target.value)}
+                                            required
+                                            placeholder="Nº"
+                                            className={`h-12 bg-gray-50 border-gray-200 ${theme.ring}`}
+                                        />
+                                    </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label className="text-sm font-bold text-gray-700">{t.guest.complement_label}</Label>
-                                    <Textarea
-                                        placeholder={t.guest.complement_placeholder}
-                                        value={guestInfo.address_complement || ""}
-                                        onChange={(e) => setGuestInfo({ ...guestInfo, address_complement: e.target.value })}
-                                        className={`bg-gray-50 border-gray-200 resize-none min-h-[80px] ${theme.ring}`}
+                                    <Label className="text-sm font-bold text-gray-700">Referência / Complemento</Label>
+                                    <Input
+                                        value={guestInfo.reference || ""}
+                                        onChange={(e) => handleFieldChange('reference', e.target.value)}
+                                        placeholder="Próximo a..."
+                                        className={`h-12 bg-gray-50 border-gray-200 ${theme.ring}`}
                                     />
                                 </div>
                             </>

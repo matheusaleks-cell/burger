@@ -14,6 +14,7 @@ import {
   Bell,
   Save,
   Settings as SettingsIcon,
+  Gift,
 } from "lucide-react";
 import {
   Tabs,
@@ -162,6 +163,7 @@ export default function Settings() {
           <TabsTrigger value="banners">Banners</TabsTrigger>
           <TabsTrigger value="printer">Impressão</TabsTrigger>
           <TabsTrigger value="sound">Sons</TabsTrigger>
+          <TabsTrigger value="rewards">Benefícios</TabsTrigger>
         </TabsList>
 
         {/* --- STORE TAB --- */}
@@ -453,7 +455,62 @@ export default function Settings() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* --- REWARDS TAB --- */}
+        <TabsContent value="rewards" className="space-y-4 mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Gift className="h-5 w-5" />
+                Benefícios & Fidelidade
+              </CardTitle>
+              <CardDescription>
+                Configure recompensas automáticas para seus clientes.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between p-4 border rounded-lg bg-slate-50 opacity-60">
+                <div className="space-y-0.5">
+                  <Label className="text-base flex items-center gap-2">
+                    Primeiro Pedido (Inativo)
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Oferecer benefício para novos clientes (identificados pelo celular).
+                  </p>
+                </div>
+                <Switch disabled checked={false} />
+              </div>
+
+              <div className="pl-6 border-l-2 border-slate-200 ml-2 space-y-4 opacity-50 pointer-events-none">
+                <div className="space-y-2">
+                  <Label>Tipo de Benefício</Label>
+                  <Select disabled>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="frete_gratis">Frete Grátis</SelectItem>
+                      <SelectItem value="desconto_pct">Desconto (%)</SelectItem>
+                      <SelectItem value="brinde">Brinde Surpresa</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Valor / Detalhes</Label>
+                  <Input disabled placeholder="Ex: 10% ou 'Sobremesa Grátis'" />
+                </div>
+              </div>
+
+              <div className="p-4 bg-yellow-50 text-yellow-800 rounded-md text-sm border border-yellow-200">
+                <p>
+                  <strong>Em breve:</strong> Esta funcionalidade permitirá criar regras automáticas para fidelizar clientes novos.
+                </p>
+              </div>
+
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
-    </div>
+    </div >
   );
 }

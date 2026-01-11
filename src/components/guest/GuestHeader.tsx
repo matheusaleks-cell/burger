@@ -15,9 +15,10 @@ interface GuestHeaderProps {
     setSearchQuery: (query: string) => void;
     isDeliveryMode?: boolean;
     isHQ?: boolean;
+    logoUrl?: string;
 }
 
-export function GuestHeader({ guestInfo, onChangeIdentity, searchQuery, setSearchQuery, isDeliveryMode, isHQ }: GuestHeaderProps) {
+export function GuestHeader({ guestInfo, onChangeIdentity, searchQuery, setSearchQuery, isDeliveryMode, isHQ, logoUrl }: GuestHeaderProps) {
 
     const { t, setLanguage, language } = useLanguage();
 
@@ -41,6 +42,9 @@ export function GuestHeader({ guestInfo, onChangeIdentity, searchQuery, setSearc
                         <div className={`p-2 rounded-lg shrink-0 ${isDeliveryMode ? 'bg-emerald-100' : 'bg-primary/10'}`}>
                             {isDeliveryMode ? <MapPin className="h-5 w-5 text-emerald-600" /> : <MapPin className="h-5 w-5 text-primary" />}
                         </div>
+                        {logoUrl && (
+                            <img src={logoUrl} alt="Logo" className="h-10 w-auto object-contain mr-3 rounded-md" />
+                        )}
                         <div className="min-w-0">
                             <p className={`text-[10px] uppercase tracking-wider font-bold ${isDeliveryMode ? 'text-emerald-600' : 'text-gray-400'}`}>{identityLabel}</p>
                             <h2 className={`text-sm font-bold flex items-center ${isDeliveryMode ? 'text-emerald-900' : 'text-gray-900'}`}>

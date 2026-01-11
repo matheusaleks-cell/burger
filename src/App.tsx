@@ -26,6 +26,7 @@ import GuestMenu from "./pages/GuestMenu";
 import GuestTrack from "./pages/GuestTrack";
 import MenuManagement from "./pages/MenuManagement";
 import Addons from "./pages/Addons";
+import Neighborhoods from "./pages/admin/Neighborhoods";
 
 const queryClient = new QueryClient();
 
@@ -198,6 +199,14 @@ function AppRoutes() {
 
 
 
+      <Route
+        path="/neighborhoods"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <Neighborhoods />
+          </ProtectedRoute>
+        }
+      />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

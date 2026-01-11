@@ -22,15 +22,24 @@ import { CartDrawer } from "@/components/guest/CartDrawer";
 import { GuestIdentification } from "@/components/guest/GuestIdentification";
 import { FooterCart } from "@/components/guest/FooterCart";
 
+import { useNeighborhoods } from "@/hooks/useNeighborhoods";
+
+// ... components imports ...
+
 const GUEST_STORAGE_KEY = "guest_info";
 
 interface GuestInfoState {
   name: string;
-  room: string;
+  room: string; // Used as "Full Address String" for compatibility
   phone: string;
   latitude: number | null;
   longitude: number | null;
-  address_complement?: string;
+  address_complement?: string; // Legacy
+  // New Fields
+  street?: string;
+  number?: string;
+  neighborhood_id?: string;
+  reference?: string;
 }
 
 export default function GuestMenu() {
@@ -41,6 +50,7 @@ export default function GuestMenu() {
 
   const { currentPousada, setPousada, isLoading: isLoadingContext, isDeliveryMode, resetMode } = usePousadaContext();
   const { pousadas } = usePousadas();
+  const { neighborhoods } = useNeighborhoods();
 
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -54,7 +64,11 @@ export default function GuestMenu() {
     phone: "",
     latitude: null,
     longitude: null,
-    address_complement: ""
+    address_complement: "",
+    street: "",
+    number: "",
+    neighborhood_id: "",
+    reference: ""
   });
 
   const [deliveryFee, setDeliveryFee] = useState<number>(0);
@@ -75,6 +89,18 @@ export default function GuestMenu() {
       }
     }
   }, [currentPousada]);
+
+  // Update Delivery Fee based on Neighborhood
+  useEffect(() => {
+    if (guestInfo.neighborhood_id) {
+      const hood = neighborhoods.find(n => n.id === guestInfo.neighborhood_id);
+      if (hood) {
+        setDeliveryFee(Number(hood.fee));
+      }
+    } else {
+      setDeliveryFee(0);
+    }
+  }, [guestInfo.neighborhood_id, neighborhoods]);
 
   useEffect(() => {
     const savedInfo = localStorage.getItem(GUEST_STORAGE_KEY);
@@ -99,7 +125,7 @@ export default function GuestMenu() {
     }
 
     if (isDelivery) {
-      if (!guestInfo.room || !guestInfo.latitude || !guestInfo.longitude) {
+      if (!guestInfo.room) {
         toast.error("Endereço obrigatório para delivery");
         return;
       }
@@ -369,6 +395,7 @@ export default function GuestMenu() {
               setGuestInfo={setGuestInfo}
               onIdentify={(e, selectedPousadaId, isDelivery) => handleIdentify(e, selectedPousadaId, isDelivery)}
               pousadas={pousadas}
+              neighborhoods={neighborhoods}
             />
           </div>
         </div>
@@ -380,6 +407,7 @@ export default function GuestMenu() {
         setSearchQuery={setSearchQuery}
         isDeliveryMode={isDeliveryMode}
         isHQ={!!currentPousada?.is_hq}
+        logoUrl="/hero_background.png" // Temporary placeholder
       />
 
       <div className="container mx-auto px-4 py-2 space-y-3">

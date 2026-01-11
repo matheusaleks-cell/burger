@@ -83,6 +83,12 @@ const SYSTEM_MENU_ITEMS: MenuItem[] = [
     roles: ["admin"],
   },
   {
+    title: "Bairros / Taxas",
+    icon: MapPin,
+    href: "/neighborhoods",
+    roles: ["admin"],
+  },
+  {
     title: "Configurações",
     icon: Settings,
     href: "/settings",
