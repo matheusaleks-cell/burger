@@ -173,7 +173,7 @@ export default function Neighborhoods() {
             <div>
                 <h1 className="text-3xl font-display font-bold flex items-center gap-3">
                     <Map className="h-8 w-8 text-primary" />
-                    Bairros de Entrega
+                    Gerenciar Bairros
                 </h1>
                 <p className="text-muted-foreground">
                     Gerencie os bairros atendidos e suas respectivas taxas de entrega.

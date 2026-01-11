@@ -230,7 +230,7 @@ export default function MenuManagement() {
                         <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="h-8 w-8">
                             <ArrowLeft className="h-4 w-4" />
                         </Button>
-                        <h1 className="text-3xl font-display font-black tracking-tighter text-slate-900 leading-none">Organizar Cardápio</h1>
+                        <h1 className="text-3xl font-display font-black tracking-tighter text-slate-900 leading-none">Gerenciar Categorias</h1>
                     </div>
                     <p className="text-sm font-medium text-muted-foreground italic ml-10">Gerencie as categorias e a ordem de exibição</p>
                 </div>
