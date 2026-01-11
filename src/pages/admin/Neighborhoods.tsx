@@ -259,30 +259,33 @@ export default function Neighborhoods() {
                             </TableHeader>
                             <TableBody>
                                 {neighborhoods.map((item) => (
-                                    <TableRow key={item.id} className="h-10">
-                                        <TableCell className="font-medium py-2">{item.name}</TableCell>
-                                        <TableCell className="py-2">R$ {item.fee.toFixed(2)}</TableCell>
-                                        <TableCell>
+                                    <TableRow key={item.id} className="h-8 border-b border-slate-100 hover:bg-slate-50/50">
+                                        <TableCell className="font-medium py-1 text-xs">{item.name}</TableCell>
+                                        <TableCell className="py-1 text-xs">R$ {item.fee.toFixed(2)}</TableCell>
+                                        <TableCell className="py-1">
                                             <Switch
+                                                className="scale-75 origin-left"
                                                 checked={item.active}
                                                 onCheckedChange={() => handleToggleActive(item.id, item.active)}
                                             />
                                         </TableCell>
-                                        <TableCell className="text-right py-2">
-                                            <div className="flex justify-end gap-2">
+                                        <TableCell className="text-right py-1">
+                                            <div className="flex justify-end gap-1">
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
+                                                    className="h-6 w-6"
                                                     onClick={() => handleEdit(item)}
                                                 >
-                                                    <Pencil className="h-4 w-4" />
+                                                    <Pencil className="h-3 w-3" />
                                                 </Button>
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
+                                                    className="h-6 w-6"
                                                     onClick={() => handleDelete(item.id)}
                                                 >
-                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                    <Trash2 className="h-3 w-3 text-destructive" />
                                                 </Button>
                                             </div>
                                         </TableCell>

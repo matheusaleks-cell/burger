@@ -5,7 +5,9 @@ import { toast } from "sonner";
 export interface Category {
     id: string;
     name: string;
+    description?: string;
     display_order: number;
+    is_active: boolean;
 }
 
 export const useCategories = () => {
@@ -16,12 +18,73 @@ export const useCategories = () => {
         queryFn: async () => {
             const { data, error } = await supabase
                 .from("categories")
-                .select("id, name") // Removed display_order causing error
-                .eq("is_active", true);
-            // .order("display_order", { ascending: true }); // Temporarily disabled
+                .select("*")
+                .order("display_order", { ascending: true });
 
             if (error) throw error;
             return data as Category[];
+        },
+    });
+
+    const createCategory = useMutation({
+        mutationFn: async (category: Omit<Category, "id">) => {
+            const { data, error } = await supabase
+                .from("categories")
+                .insert(category)
+                .select()
+                .single();
+
+            if (error) throw error;
+            return data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["categories"] });
+            toast.success("Categoria criada com sucesso!");
+        },
+        onError: (error) => {
+            toast.error("Erro ao criar categoria");
+            console.error(error);
+        },
+    });
+
+    const updateCategory = useMutation({
+        mutationFn: async ({ id, ...updates }: Partial<Category> & { id: string }) => {
+            const { data, error } = await supabase
+                .from("categories")
+                .update(updates)
+                .eq("id", id)
+                .select()
+                .single();
+
+            if (error) throw error;
+            return data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["categories"] });
+            toast.success("Categoria atualizada!");
+        },
+        onError: (error) => {
+            toast.error("Erro ao atualizar categoria");
+            console.error(error);
+        },
+    });
+
+    const deleteCategory = useMutation({
+        mutationFn: async (id: string) => {
+            const { error } = await supabase
+                .from("categories")
+                .delete()
+                .eq("id", id);
+
+            if (error) throw error;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["categories"] });
+            toast.success("Categoria removida!");
+        },
+        onError: (error) => {
+            toast.error("Erro ao remover categoria");
+            console.error(error);
         },
     });
 
@@ -47,5 +110,11 @@ export const useCategories = () => {
         },
     });
 
-    return { ...query, updateCategoriesOrder };
+    return {
+        ...query,
+        createCategory,
+        updateCategory,
+        deleteCategory,
+        updateCategoriesOrder
+    };
 };

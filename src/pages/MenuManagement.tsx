@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useProducts, Product } from "@/hooks/useProducts";
 import { useCategories, Category } from "@/hooks/useCategories";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
     DndContext,
@@ -21,9 +20,13 @@ import {
     useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Save, ArrowLeft, Package, LayoutGrid } from "lucide-react";
+import { GripVertical, Save, ArrowLeft, Package, LayoutGrid, Plus, Pencil, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 
 interface SortableItemProps {
     id: string;
@@ -69,11 +72,27 @@ const SortableItem = ({ id, children, className }: SortableItemProps) => {
 export default function MenuManagement() {
     const navigate = useNavigate();
     const { products, updateProductsOrder, isLoading: loadingProducts } = useProducts();
-    const { data: categories = [], updateCategoriesOrder, isLoading: loadingCategories } = useCategories();
+    const {
+        data: categories = [],
+        updateCategoriesOrder,
+        createCategory,
+        updateCategory,
+        deleteCategory,
+        isLoading: loadingCategories
+    } = useCategories();
 
     const [orderedCategories, setOrderedCategories] = useState<Category[]>([]);
     const [orderedProducts, setOrderedProducts] = useState<Product[]>([]);
     const [hasChanges, setHasChanges] = useState(false);
+
+    // CRUD State
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+    const [formData, setFormData] = useState({
+        name: "",
+        description: "",
+        is_active: true
+    });
 
     useEffect(() => {
         if (categories.length) {
@@ -126,16 +145,14 @@ export default function MenuManagement() {
         }
     };
 
-    const handleSave = async () => {
+    const handleSaveOrder = async () => {
         try {
-            // Update categories
             const categoryUpdates = orderedCategories.map((cat, index) => ({
                 id: cat.id,
                 display_order: index,
             }));
             await updateCategoriesOrder.mutateAsync(categoryUpdates);
 
-            // Update products (preserving relative order within categories)
             const productUpdates = orderedProducts.map((prod, index) => ({
                 id: prod.id,
                 display_order: index,
@@ -149,6 +166,53 @@ export default function MenuManagement() {
             toast.error("Erro ao salvar a nova ordem");
         }
     };
+
+    // CRUD Handlers
+    const handleOpenDialog = (category?: Category) => {
+        if (category) {
+            setEditingCategory(category);
+            setFormData({
+                name: category.name,
+                description: category.description || "",
+                is_active: category.is_active
+            });
+        } else {
+            setEditingCategory(null);
+            setFormData({
+                name: "",
+                description: "",
+                is_active: true
+            });
+        }
+        setIsDialogOpen(true);
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        try {
+            if (editingCategory) {
+                await updateCategory.mutateAsync({
+                    id: editingCategory.id,
+                    ...formData
+                });
+            } else {
+                await createCategory.mutateAsync({
+                    ...formData,
+                    display_order: orderedCategories.length // Put at end
+                });
+            }
+            setIsDialogOpen(false);
+        } catch (error) {
+            // Error handled in hook
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (confirm("Tem certeza? Isso pode afetar produtos vinculados a esta categoria.")) {
+            await deleteCategory.mutateAsync(id);
+        }
+    }
 
     if (loadingProducts || loadingCategories) {
         return (
@@ -168,17 +232,62 @@ export default function MenuManagement() {
                         </Button>
                         <h1 className="text-3xl font-display font-black tracking-tighter text-slate-900 leading-none">Organizar Cardápio</h1>
                     </div>
-                    <p className="text-sm font-medium text-muted-foreground italic ml-10">Arraste e solte para definir a ordem de exibição para os hóspedes</p>
+                    <p className="text-sm font-medium text-muted-foreground italic ml-10">Gerencie as categorias e a ordem de exibição</p>
                 </div>
 
-                <Button
-                    onClick={handleSave}
-                    disabled={!hasChanges || updateCategoriesOrder.isPending || updateProductsOrder.isPending}
-                    className="gap-2 font-black uppercase text-xs tracking-widest px-8 shadow-lg shadow-primary/20"
-                >
-                    <Save className="h-4 w-4" />
-                    {updateCategoriesOrder.isPending || updateProductsOrder.isPending ? "Salvando..." : "Salvar Ordem"}
-                </Button>
+                <div className="flex gap-2">
+                    <Button
+                        onClick={handleSaveOrder}
+                        disabled={!hasChanges || updateCategoriesOrder.isPending || updateProductsOrder.isPending}
+                        className="gap-2 font-black uppercase text-xs tracking-widest px-6 shadow-lg shadow-primary/20"
+                    >
+                        <Save className="h-4 w-4" />
+                        {updateCategoriesOrder.isPending ? "Salvando..." : "Salvar Ordem"}
+                    </Button>
+
+                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button onClick={() => handleOpenDialog()} variant="outline" className="gap-2 font-bold border-dashed border-2">
+                                <Plus className="h-4 w-4" />
+                                Nova Categoria
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>{editingCategory ? "Editar Categoria" : "Nova Categoria"}</DialogTitle>
+                            </DialogHeader>
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label>Nome</Label>
+                                    <Input
+                                        value={formData.name}
+                                        onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                        placeholder="Ex: Hambúrgueres"
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Descrição (Opcional)</Label>
+                                    <Input
+                                        value={formData.description}
+                                        onChange={e => setFormData({ ...formData, description: e.target.value })}
+                                        placeholder="Ex: Nossos deliciosos burgers artesanais"
+                                    />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Switch
+                                        checked={formData.is_active}
+                                        onCheckedChange={checked => setFormData({ ...formData, is_active: checked })}
+                                    />
+                                    <Label>Categoria Ativa</Label>
+                                </div>
+                                <Button type="submit" className="w-full mt-4">
+                                    {editingCategory ? "Salvar Alterações" : "Criar Categoria"}
+                                </Button>
+                            </form>
+                        </DialogContent>
+                    </Dialog>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -201,10 +310,24 @@ export default function MenuManagement() {
                                 {orderedCategories.map((category) => (
                                     <SortableItem key={category.id} id={category.id}>
                                         <div className="flex items-center justify-between">
-                                            <span className="font-bold text-slate-700">{category.name}</span>
-                                            <Badge variant="outline" className="text-[10px] uppercase font-black">
-                                                {orderedProducts.filter(p => p.category_id === category.id).length} itens
-                                            </Badge>
+                                            <div className="flex flex-col">
+                                                <div className="flex items-center gap-2">
+                                                    <span className={category.is_active ? "font-bold text-slate-700" : "font-bold text-slate-400 line-through"}>
+                                                        {category.name}
+                                                    </span>
+                                                    {!category.is_active && <Badge variant="secondary" className="text-[9px] px-1 h-4">Inativo</Badge>}
+                                                </div>
+                                                <span className="text-[10px] text-muted-foreground">{orderedProducts.filter(p => p.category_id === category.id).length} itens</span>
+                                            </div>
+
+                                            <div className="flex gap-1" onPointerDown={e => e.stopPropagation()}>
+                                                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleOpenDialog(category)}>
+                                                    <Pencil className="h-3 w-3 text-slate-400 hover:text-blue-500" />
+                                                </Button>
+                                                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleDelete(category.id)}>
+                                                    <Trash2 className="h-3 w-3 text-slate-300 hover:text-red-500" />
+                                                </Button>
+                                            </div>
                                         </div>
                                     </SortableItem>
                                 ))}
@@ -216,6 +339,7 @@ export default function MenuManagement() {
                 {/* Products Column */}
                 <div className="lg:col-span-2 space-y-8">
                     {orderedCategories.map((category) => {
+                        if (!category.is_active) return null; // Hide inactive categories from product preview
                         const categoryProducts = orderedProducts.filter(p => p.category_id === category.id);
 
                         return (
@@ -276,7 +400,7 @@ export default function MenuManagement() {
             {hasChanges && (
                 <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white border-2 border-primary shadow-2xl rounded-full px-6 py-3 flex items-center gap-4 animate-bounce-subtle z-50">
                     <p className="text-sm font-black uppercase tracking-tighter text-slate-900">Alterações não salvas!</p>
-                    <Button size="sm" onClick={handleSave} className="font-black text-[10px] uppercase h-8">Salvar Agora</Button>
+                    <Button size="sm" onClick={handleSaveOrder} className="font-black text-[10px] uppercase h-8">Salvar Agora</Button>
                 </div>
             )}
         </div>
