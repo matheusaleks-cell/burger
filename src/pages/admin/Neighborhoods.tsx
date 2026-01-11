@@ -259,16 +259,16 @@ export default function Neighborhoods() {
                             </TableHeader>
                             <TableBody>
                                 {neighborhoods.map((item) => (
-                                    <TableRow key={item.id}>
-                                        <TableCell className="font-medium">{item.name}</TableCell>
-                                        <TableCell>R$ {item.fee.toFixed(2)}</TableCell>
+                                    <TableRow key={item.id} className="h-10">
+                                        <TableCell className="font-medium py-2">{item.name}</TableCell>
+                                        <TableCell className="py-2">R$ {item.fee.toFixed(2)}</TableCell>
                                         <TableCell>
                                             <Switch
                                                 checked={item.active}
                                                 onCheckedChange={() => handleToggleActive(item.id, item.active)}
                                             />
                                         </TableCell>
-                                        <TableCell className="text-right">
+                                        <TableCell className="text-right py-2">
                                             <div className="flex justify-end gap-2">
                                                 <Button
                                                     variant="ghost"
