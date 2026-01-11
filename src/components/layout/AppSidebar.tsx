@@ -56,7 +56,7 @@ const MAIN_MENU_ITEMS: MenuItem[] = [
     roles: ["admin"],
   },
   {
-    title: "Organizar Cardápio",
+    title: "Categorias / Sessões",
     icon: UtensilsCrossed,
     href: "/menu-management",
     roles: ["admin"],
