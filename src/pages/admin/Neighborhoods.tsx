@@ -248,51 +248,64 @@ export default function Neighborhoods() {
                             Nenhum bairro cadastrado.
                         </div>
                     ) : (
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Nome</TableHead>
-                                    <TableHead>Taxa</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead className="text-right">Ações</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {neighborhoods.map((item) => (
-                                    <TableRow key={item.id} className="h-8 border-b border-slate-100 hover:bg-slate-50/50">
-                                        <TableCell className="font-medium py-1 text-xs">{item.name}</TableCell>
-                                        <TableCell className="py-1 text-xs">R$ {item.fee.toFixed(2)}</TableCell>
-                                        <TableCell className="py-1">
-                                            <Switch
-                                                className="scale-75 origin-left"
-                                                checked={item.active}
-                                                onCheckedChange={() => handleToggleActive(item.id, item.active)}
-                                            />
-                                        </TableCell>
-                                        <TableCell className="text-right py-1">
-                                            <div className="flex justify-end gap-1">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-6 w-6"
-                                                    onClick={() => handleEdit(item)}
-                                                >
-                                                    <Pencil className="h-3 w-3" />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-6 w-6"
-                                                    onClick={() => handleDelete(item.id)}
-                                                >
-                                                    <Trash2 className="h-3 w-3 text-destructive" />
-                                                </Button>
-                                            </div>
-                                        </TableCell>
+                        <div className="border rounded-md overflow-hidden">
+                            <Table>
+                                <TableHeader className="bg-slate-100/80">
+                                    <TableRow className="h-8 hover:bg-transparent">
+                                        <TableHead className="h-8 py-1 px-2 text-xs font-semibold text-slate-600 border-r">Nome</TableHead>
+                                        <TableHead className="h-8 py-1 px-2 text-xs font-semibold text-slate-600 border-r w-[150px]">Taxa</TableHead>
+                                        <TableHead className="h-8 py-1 px-2 text-xs font-semibold text-slate-600 border-r w-[100px] text-center">Status</TableHead>
+                                        <TableHead className="h-8 py-1 px-2 text-xs font-semibold text-slate-600 text-center w-[100px]">Ações</TableHead>
                                     </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                                </TableHeader>
+                                <TableBody>
+                                    {neighborhoods.map((item, index) => (
+                                        <TableRow
+                                            key={item.id}
+                                            className={`h-8 hover:bg-blue-50/50 ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}`}
+                                        >
+                                            <TableCell className="py-1 px-2 text-xs border-r border-slate-100 font-medium text-slate-700">
+                                                {item.name}
+                                            </TableCell>
+                                            <TableCell className="py-1 px-2 text-xs border-r border-slate-100 text-slate-600 font-mono">
+                                                R$ {item.fee.toFixed(2)}
+                                            </TableCell>
+                                            <TableCell className="py-0 px-1 border-r border-slate-100 text-center align-middle">
+                                                <div className="flex justify-center items-center h-full">
+                                                    <Switch
+                                                        className="scale-[0.6]"
+                                                        checked={item.active}
+                                                        onCheckedChange={() => handleToggleActive(item.id, item.active)}
+                                                    />
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="py-0 px-1 text-center align-middle">
+                                                <div className="flex justify-center items-center gap-1 h-full">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-6 w-6 hover:bg-blue-100 text-slate-500 hover:text-blue-600"
+                                                        onClick={() => handleEdit(item)}
+                                                        title="Editar"
+                                                    >
+                                                        <Pencil className="h-3 w-3" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-6 w-6 hover:bg-red-100 text-slate-400 hover:text-red-600"
+                                                        onClick={() => handleDelete(item.id)}
+                                                        title="Excluir"
+                                                    >
+                                                        <Trash2 className="h-3 w-3" />
+                                                    </Button>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
                     )}
                 </CardContent>
             </Card>
