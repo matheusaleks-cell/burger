@@ -36,49 +36,54 @@ type MenuItem = {
   roles: ("admin" | "attendant" | "kitchen")[];
 };
 
-const MAIN_MENU_ITEMS: MenuItem[] = [
-  {
-    title: "CATEGORIAS (Novo)",
+{
+  title: "CATEGORIAS (Novo)",
     icon: List,
-    href: "/menu-management",
-    roles: ["admin", "attendant"],
+      href: "/menu-management",
+        roles: ["admin", "attendant"],
   },
-  {
-    title: "Pedidos / Delivery",
+{
+  title: "BAIRROS (Taxas)",
+    icon: MapPin,
+      href: "/neighborhoods",
+        roles: ["admin", "attendant"],
+  },
+{
+  title: "Pedidos / Delivery",
     icon: ShoppingBag,
-    href: "/orders",
-    roles: ["admin", "attendant"],
+      href: "/orders",
+        roles: ["admin", "attendant"],
   },
-  // KDS Removed as requested
-  {
-    title: "Dashboard",
+// KDS Removed as requested
+{
+  title: "Dashboard",
     icon: LayoutDashboard,
-    href: "/dashboard",
-    roles: ["admin", "attendant"],
+      href: "/dashboard",
+        roles: ["admin", "attendant"],
   },
-  {
-    title: "Cardápio / Produtos",
+{
+  title: "Cardápio / Produtos",
     icon: Package,
-    href: "/products",
-    roles: ["admin"],
+      href: "/products",
+        roles: ["admin"],
   },
-  {
-    title: "Categorias / Sessões",
+{
+  title: "Categorias / Sessões",
     icon: UtensilsCrossed,
-    href: "/menu-management",
-    roles: ["admin"],
+      href: "/menu-management",
+        roles: ["admin"],
   },
-  {
-    title: "Clientes",
+{
+  title: "Clientes",
     icon: Users,
-    href: "/customers",
-    roles: ["admin", "attendant"],
+      href: "/customers",
+        roles: ["admin", "attendant"],
   },
-  {
-    title: "Relatórios",
+{
+  title: "Relatórios",
     icon: BarChart3,
-    href: "/reports",
-    roles: ["admin"],
+      href: "/reports",
+        roles: ["admin"],
   },
 ];
 
@@ -87,12 +92,6 @@ const SYSTEM_MENU_ITEMS: MenuItem[] = [
     title: "Locais / Pousadas",
     icon: MapPin,
     href: "/pousadas",
-    roles: ["admin"],
-  },
-  {
-    title: "Bairros / Taxas",
-    icon: MapPin,
-    href: "/neighborhoods",
     roles: ["admin"],
   },
   {
