@@ -11,7 +11,7 @@ import { useState } from "react";
 import { PopularItemsCard } from "@/components/dashboard/PopularItemsCard";
 
 export default function Dashboard() {
-  const { stats, recentOrders, isLoading } = useDashboardStats();
+  const { stats, recentOrders, popularItems, isLoading } = useDashboardStats();
   const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
 
   if (isLoading) {
@@ -57,7 +57,7 @@ export default function Dashboard() {
           <RecentOrdersCard orders={recentOrders} />
         </div>
         <div className="lg:col-span-1">
-          <PopularItemsCard />
+          <PopularItemsCard items={popularItems} />
         </div>
       </div>
     </div>

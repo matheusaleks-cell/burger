@@ -14,6 +14,13 @@ export interface DashboardStats {
     averageTicket: number;
 }
 
+export interface PopularItem {
+    id: string; // product name as ID for aggregation
+    name: string;
+    count: number;
+    revenue: number;
+}
+
 export const useDashboardStats = () => {
     const { orders = [], isLoading } = useOrders();
 
@@ -66,6 +73,38 @@ export const useDashboardStats = () => {
         };
     }, [orders]);
 
+    const popularItems = useMemo<PopularItem[]>(() => {
+        if (!orders.length) return [];
+
+        const itemMap = new Map<string, PopularItem>();
+
+        orders.forEach(order => {
+            // Only count items from valid (non-cancelled) orders? 
+            // Usually popular items should reflect demand, even if cancelled, but to match revenue metrics, 
+            // we probably should exclude cancelled ones or purely stick to "what people want".
+            // Let's exclude cancelled for consistency with sales stats.
+            if (order.status === 'cancelled') return;
+
+            order.order_items?.forEach(item => {
+                const existing = itemMap.get(item.product_name) || {
+                    id: item.product_name,
+                    name: item.product_name,
+                    count: 0,
+                    revenue: 0
+                };
+
+                existing.count += item.quantity;
+                existing.revenue += (item.unit_price * item.quantity);
+                itemMap.set(item.product_name, existing);
+            });
+        });
+
+        // Convert to array and sort by count (desc)
+        return Array.from(itemMap.values())
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 5); // Top 5
+    }, [orders]);
+
     const recentOrders = useMemo(() => {
         return orders.slice(0, 5);
     }, [orders]);
@@ -73,6 +112,7 @@ export const useDashboardStats = () => {
     return {
         stats,
         recentOrders,
+        popularItems,
         isLoading,
     };
 };
