@@ -46,10 +46,23 @@ export function ProductListView({
         return acc;
     }, {} as Record<string, Product[]>);
 
+    // Sort categories by display_order
     const sortedCategories = Object.keys(groupedProducts).sort((a, b) => {
         if (a === "Sem Categoria") return 1;
         if (b === "Sem Categoria") return -1;
-        return a.localeCompare(b);
+
+        // Find a product in each group to access the category's display_order
+        const catA = groupedProducts[a][0].categories;
+        const catB = groupedProducts[b][0].categories;
+
+        return (catA?.display_order || 999) - (catB?.display_order || 999);
+    });
+
+    // Sort products within categories
+    sortedCategories.forEach(cat => {
+        groupedProducts[cat].sort((a, b) => {
+            return (a.display_order || 999) - (b.display_order || 999);
+        });
     });
 
     return (
@@ -178,7 +191,7 @@ function CategoryGroup({
                                         variant="ghost"
                                         size="icon"
                                         onClick={() => onEdit(product)}
-                                        className="h-8 w-8 hover:text-blue-600 hover:bg-blue-50"
+                                        className="h-8 w-8 text-slate-500 hover:text-blue-600 hover:bg-blue-50"
                                     >
                                         <Pencil className="h-4 w-4" />
                                     </Button>
@@ -186,7 +199,7 @@ function CategoryGroup({
                                         variant="ghost"
                                         size="icon"
                                         onClick={() => onDelete(product.id)}
-                                        className="h-8 w-8 hover:text-red-600 hover:bg-red-50"
+                                        className="h-8 w-8 text-slate-400 hover:text-red-600 hover:bg-red-50"
                                     >
                                         <Trash2 className="h-4 w-4" />
                                     </Button>
