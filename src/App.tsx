@@ -193,18 +193,15 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/neighborhoods"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <Neighborhoods />
+            </ProtectedRoute>
+          }
+        />
       </Route>
-
-
-
-      <Route
-        path="/neighborhoods"
-        element={
-          <ProtectedRoute allowedRoles={["admin"]}>
-            <Neighborhoods />
-          </ProtectedRoute>
-        }
-      />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
