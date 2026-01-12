@@ -69,12 +69,6 @@ const MAIN_MENU_ITEMS: MenuItem[] = [
     roles: ["admin"],
   },
   {
-    title: "Categorias / Sessões",
-    icon: UtensilsCrossed,
-    href: "/menu-management",
-    roles: ["admin"],
-  },
-  {
     title: "Clientes",
     icon: Users,
     href: "/customers",
