@@ -250,54 +250,49 @@ export default function Neighborhoods() {
                     ) : (
                         <div className="border rounded-md overflow-hidden">
                             <Table>
-                                <TableHeader className="bg-slate-100/80">
-                                    <TableRow className="h-8 hover:bg-transparent">
-                                        <TableHead className="h-8 py-1 px-2 text-xs font-semibold text-slate-600 border-r">Nome</TableHead>
-                                        <TableHead className="h-8 py-1 px-2 text-xs font-semibold text-slate-600 border-r w-[150px]">Taxa</TableHead>
-                                        <TableHead className="h-8 py-1 px-2 text-xs font-semibold text-slate-600 border-r w-[100px] text-center">Status</TableHead>
-                                        <TableHead className="h-8 py-1 px-2 text-xs font-semibold text-slate-600 text-center w-[100px]">Ações</TableHead>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Nome</TableHead>
+                                        <TableHead className="w-[150px]">Taxa</TableHead>
+                                        <TableHead className="w-[100px] text-center">Status</TableHead>
+                                        <TableHead className="w-[100px] text-right">Ações</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {neighborhoods.map((item, index) => (
-                                        <TableRow
-                                            key={item.id}
-                                            className={`h-8 hover:bg-blue-50/50 ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}`}
-                                        >
-                                            <TableCell className="py-1 px-2 text-xs border-r border-slate-100 font-medium text-slate-700">
+                                    {neighborhoods.map((item) => (
+                                        <TableRow key={item.id}>
+                                            <TableCell className="font-medium">
                                                 {item.name}
                                             </TableCell>
-                                            <TableCell className="py-1 px-2 text-xs border-r border-slate-100 text-slate-600 font-mono">
-                                                R$ {item.fee.toFixed(2)}
+                                            <TableCell className="font-mono text-slate-600">
+                                                {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(item.fee)}
                                             </TableCell>
-                                            <TableCell className="py-0 px-1 border-r border-slate-100 text-center align-middle">
-                                                <div className="flex justify-center items-center h-full">
+                                            <TableCell className="text-center">
+                                                <div className="flex justify-center items-center">
                                                     <Switch
-                                                        className="scale-[0.6]"
                                                         checked={item.active}
                                                         onCheckedChange={() => handleToggleActive(item.id, item.active)}
                                                     />
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="py-0 px-1 text-center align-middle">
-                                                <div className="flex justify-center items-center gap-1 h-full">
+                                            <TableCell className="text-right">
+                                                <div className="flex justify-end gap-2">
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
-                                                        className="h-6 w-6 hover:bg-blue-100 text-slate-500 hover:text-blue-600"
                                                         onClick={() => handleEdit(item)}
                                                         title="Editar"
                                                     >
-                                                        <Pencil className="h-3 w-3" />
+                                                        <Pencil className="h-4 w-4 text-slate-500" />
                                                     </Button>
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
-                                                        className="h-6 w-6 hover:bg-red-100 text-slate-400 hover:text-red-600"
                                                         onClick={() => handleDelete(item.id)}
                                                         title="Excluir"
+                                                        className="hover:text-red-600 hover:bg-red-50"
                                                     >
-                                                        <Trash2 className="h-3 w-3" />
+                                                        <Trash2 className="h-4 w-4 text-slate-400 group-hover:text-red-500" />
                                                     </Button>
                                                 </div>
                                             </TableCell>
