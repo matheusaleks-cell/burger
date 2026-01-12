@@ -1,4 +1,5 @@
 import { Toaster } from "@/components/ui/toaster";
+import React, { useEffect } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -30,14 +31,11 @@ import Neighborhoods from "./pages/admin/Neighborhoods";
 
 const queryClient = new QueryClient();
 
-import { fixAdminRole } from "@/utils/fixAdminRole";
-import { useEffect } from "react";
-
 function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: string[] }) {
   const { user, role, loading, isAdmin } = useAuth();
 
   useEffect(() => {
-    fixAdminRole();
+    // Admin role should be set via Supabase Dashboard only
   }, []);
 
   if (loading) {

@@ -70,13 +70,14 @@ export default function Kitchen() {
 
   return (
     <div className={`space-y-6 animate-fade-in kitchen-display transition-colors duration-500 ${isPlaying ? "bg-red-50/30" : ""}`}>
-      <div className="flex items-center justify-between">
+      {/* Persistent Flashing Header for Pending Orders */}
+      <div className={`flex items-center justify-between p-4 rounded-xl transition-all duration-300 ${pendingOrders.length > 0 ? 'bg-red-500 text-white animate-pulse shadow-xl scale-[1.01]' : 'bg-transparent'}`}>
         <div>
-          <h1 className="text-3xl lg:text-4xl font-display font-black tracking-tighter flex items-center gap-3 text-slate-900 leading-none">
-            <Bell className="h-8 w-8 lg:h-10 lg:w-10 text-primary" />
+          <h1 className={`text-3xl lg:text-4xl font-display font-black tracking-tighter flex items-center gap-3 leading-none ${pendingOrders.length > 0 ? 'text-white' : 'text-slate-900'}`}>
+            <Bell className={`h-8 w-8 lg:h-10 lg:w-10 ${pendingOrders.length > 0 ? 'text-white' : 'text-primary'}`} />
             Serviço de Quarto
           </h1>
-          <p className="text-muted-foreground text-sm font-bold uppercase tracking-wider mt-2">
+          <p className={`text-sm font-bold uppercase tracking-wider mt-2 ${pendingOrders.length > 0 ? 'text-white/90' : 'text-muted-foreground'}`}>
             {pendingOrders.length} aguardando • {preparingOrders.length} em atendimento
           </p>
         </div>
@@ -88,7 +89,7 @@ export default function Kitchen() {
             if (isPlaying) stopAlarm();
             else setSoundEnabled(!soundEnabled);
           }}
-          className={`gap-2 font-black uppercase text-xs tracking-widest shadow-lg ${isPlaying ? "shadow-red-500/20" : "shadow-primary/20"}`}
+          className={`gap-2 font-black uppercase text-xs tracking-widest shadow-lg ${isPlaying ? "bg-white text-red-600 hover:bg-white/90" : (pendingOrders.length > 0 ? "bg-white/20 text-white border-white/40 hover:bg-white/30" : "")}`}
         >
           {isPlaying ? (
             <>

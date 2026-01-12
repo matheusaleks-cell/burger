@@ -39,6 +39,10 @@ export function ProductModal({ product, isOpen, onClose, onAddToCart }: ProductM
     const [notes, setNotes] = useState("");
     const [selectedComplements, setSelectedComplements] = useState<SelectedComplement[]>([]);
 
+    // Proactive Validation State
+    const [isValid, setIsValid] = useState(false);
+    const [touched, setTouched] = useState(false);
+
     const { data: addonGroups = [], isLoading } = useProductAddons(product?.id || null);
 
     useEffect(() => {
@@ -46,14 +50,34 @@ export function ProductModal({ product, isOpen, onClose, onAddToCart }: ProductM
             setQuantity(1);
             setNotes("");
             setSelectedComplements([]);
+            setTouched(false);
         }
     }, [isOpen, product]);
+
+    // Validation Logic
+    useEffect(() => {
+        if (!isOpen || isLoading) return;
+
+        let valid = true;
+        for (const group of addonGroups) {
+            if (group.min_quantity > 0) {
+                const count = selectedComplements.filter(s => s.groupId === group.id).length;
+                if (count < group.min_quantity) {
+                    valid = false;
+                    break;
+                }
+            }
+        }
+        setIsValid(valid);
+    }, [selectedComplements, addonGroups, isOpen, isLoading]);
+
 
     const handleQuantityChange = (delta: number) => {
         setQuantity((prev) => Math.max(1, prev + delta));
     };
 
     const handleComplementToggle = (group: ComplementGroup, item: ComplementItem, checked: boolean) => {
+        setTouched(true);
         setSelectedComplements((prev) => {
             // Create a copy of current selections
             let newSelections = [...prev];
@@ -70,9 +94,6 @@ export function ProductModal({ product, isOpen, onClose, onAddToCart }: ProductM
                         price: item.price,
                         quantity: 1
                     });
-                } else {
-                    // Cannot uncheck in radio mode usually, but handling it just in case logic needs it
-                    // Actually for radio, clicking another option triggers this.
                 }
             } else {
                 // Multiple choice logic (Checkbox)
@@ -108,16 +129,10 @@ export function ProductModal({ product, isOpen, onClose, onAddToCart }: ProductM
 
     const handleAddToCart = () => {
         if (!product) return;
-
-        // Validate required groups
-        for (const group of addonGroups) {
-            if (group.min_quantity > 0) {
-                const count = selectedComplements.filter(s => s.groupId === group.id).length;
-                if (count < group.min_quantity) {
-                    toast.error(`Selecione pelo menos ${group.min_quantity} opção(ões) de ${group.name}`);
-                    return;
-                }
-            }
+        if (!isValid) {
+            // Should be covered by disabled button, but as safety:
+            toast.error("Por favor, selecione os itens obrigatórios.");
+            return;
         }
 
         onAddToCart(product, quantity, selectedComplements, notes);
@@ -152,7 +167,7 @@ export function ProductModal({ product, isOpen, onClose, onAddToCart }: ProductM
 
                 {/* Content Scrollable */}
                 <ScrollArea className="flex-1">
-                    <div className="p-6 space-y-6">
+                    <div className="p-6 space-y-8">
                         <div>
                             <DialogTitle className="text-2xl font-bold mb-2">{product.name}</DialogTitle>
                             <DialogDescription className="text-base text-gray-600">
@@ -171,79 +186,100 @@ export function ProductModal({ product, isOpen, onClose, onAddToCart }: ProductM
                         )}
 
                         {/* Addon Groups */}
-                        {!isLoading && addonGroups.map((group) => (
-                            <div key={group.id} className="space-y-3 border-b border-gray-100 pb-4 last:border-0">
-                                <div className="flex justify-between items-baseline">
-                                    <div>
-                                        <h3 className="font-bold text-gray-800">{group.name}</h3>
-                                        <p className="text-sm text-gray-500">
-                                            {group.min_quantity > 0 && group.max_quantity === 1 ? (
-                                                t.guest.product.choice_1
-                                            ) : (
-                                                `${group.min_quantity > 0 ? `${t.guest.product.choice_min} ${group.min_quantity}` : `${t.guest.product.choice_max}`} ${group.max_quantity ? group.max_quantity : t.guest.product.choice_many}`
-                                            )}
-                                        </p>
-                                    </div>
-                                    {group.min_quantity > 0 && (
-                                        <span className="bg-gray-800 text-white text-xs px-2 py-1 rounded">{t.guest.product.required}</span>
-                                    )}
-                                </div>
+                        {!isLoading && addonGroups.map((group) => {
+                            const currentCount = selectedComplements.filter(s => s.groupId === group.id).length;
+                            const isRequired = group.min_quantity > 0;
+                            const isSatisfied = currentCount >= group.min_quantity;
 
-                                <div className="space-y-3">
-                                    {group.items.map((item) => {
-                                        const isSelected = selectedComplements.some(s => s.groupId === group.id && s.itemId === item.id);
-                                        const isGroupFull = group.max_quantity !== null
-                                            && selectedComplements.filter(s => s.groupId === group.id).length >= group.max_quantity;
-                                        const disabled = !isSelected && isGroupFull && group.max_quantity !== 1; // Don't disable if radio mode (max=1) because clicking another should swap
-
-                                        return (
-                                            <div key={item.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 bg-white border border-transparent hover:border-gray-100 transition-colors cursor-pointer" onClick={() => {
-                                                if (!disabled) {
-                                                    // Simplified handler trigger (reusing the same logic or calling click on input)
-                                                }
-                                            }}>
-                                                <div className="flex items-center space-x-3 w-full">
-                                                    {group.max_quantity === 1 ? (
-                                                        <RadioGroup
-                                                            value={selectedComplements.find(s => s.groupId === group.id)?.itemId || ""}
-                                                            onValueChange={() => handleComplementToggle(group, item, true)}
-                                                        >
-                                                            <div className="flex items-center space-x-3">
-                                                                <RadioGroupItem value={item.id} id={item.id} />
-                                                                <Label htmlFor={item.id} className="flex-1 cursor-pointer font-medium">
-                                                                    {item.name}
-                                                                </Label>
-                                                            </div>
-                                                        </RadioGroup>
-                                                    ) : (
-                                                        <div className="flex items-center space-x-3">
-                                                            <Checkbox
-                                                                id={item.id}
-                                                                checked={isSelected}
-                                                                onCheckedChange={(checked) => handleComplementToggle(group, item, checked as boolean)}
-                                                                disabled={disabled}
-                                                            />
-                                                            <Label htmlFor={item.id} className={`flex-1 cursor-pointer font-medium ${disabled ? "opacity-50" : ""}`}>
-                                                                {item.name}
-                                                            </Label>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <span className="font-medium text-gray-600">
-                                                    {item.price > 0 ? `+${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(item.price)}` : t.guest.product.free}
+                            return (
+                                <div key={group.id} className={`space-y-4 border-b border-gray-100 pb-6 last:border-0 ${isRequired && !isSatisfied && touched ? 'bg-red-50/50 -mx-4 px-4 py-2 rounded-lg' : ''}`}>
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2">
+                                                {group.name}
+                                                {isRequired && (
+                                                    <span className={`text-xs px-2 py-0.5 rounded-full ${isSatisfied ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                        {isSatisfied ? 'OK' : 'Obrigatório'}
+                                                    </span>
+                                                )}
+                                            </h3>
+                                            <p className="text-sm text-gray-500 mt-1">
+                                                {group.min_quantity > 0 && group.max_quantity === 1 ? (
+                                                    t.guest.product.choice_1
+                                                ) : (
+                                                    <>
+                                                        Escolha {group.min_quantity > 0 ? `pelo menos ${group.min_quantity}` : ''} {group.max_quantity ? `até ${group.max_quantity}` : ''}
+                                                    </>
+                                                )}
+                                                <span className="block text-xs font-semibold mt-1 text-primary">
+                                                    Selecionado: {currentCount} / {group.max_quantity || '∞'}
                                                 </span>
-                                            </div>
-                                        )
-                                    })}
-                                </div>
-                            </div>
-                        ))}
+                                            </p>
+                                        </div>
+                                    </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="notes">{t.guest.product.notes}</Label>
+                                    <div className="space-y-3">
+                                        {group.items.map((item) => {
+                                            const isSelected = selectedComplements.some(s => s.groupId === group.id && s.itemId === item.id);
+                                            const isGroupFull = group.max_quantity !== null
+                                                && currentCount >= group.max_quantity;
+                                            const disabled = !isSelected && isGroupFull && group.max_quantity !== 1; // Don't disable if radio mode (max=1) because clicking another should swap
+
+                                            return (
+                                                <div key={item.id} className={`flex items-center justify-between p-3 rounded-lg border transition-all cursor-pointer ${isSelected ? 'bg-primary/5 border-primary shadow-sm' : 'bg-white border-gray-100 hover:border-gray-200'}`} onClick={() => {
+                                                    if (!disabled) {
+                                                        // Handle logic
+                                                        // Trigger logic is inside components but we can click the container
+                                                        // Need to ensure we don't double trigger if clicking directly on input
+                                                        // Actually we can just rely on the label/input click propagation or manual call.
+                                                        // For accessible inputs, clicking container to toggle is good.
+                                                        // Let's manually toggle if it's the container, but inputs stop propagation? 
+                                                        // Easier: Toggle logic is state based, let's call it.
+                                                        // BUT: `Checkbox` and `RadioGroupItem` handle their own clicks.
+                                                        // Let's wrap safely or leave standard behavior.
+                                                        // To improve UX, clickable container is key. 
+                                                        // We'll call the toggle function if it's a div click, but we need to know the state.
+                                                        // Simpler approach: Just rely on label being full width usually.
+                                                        // Let's bind onClick to container and prevent default on inputs if needed, or better, let the Input control it.
+                                                        // Since we have `onClick` on div below, let's keep it simple.
+                                                        const isRadio = group.max_quantity === 1;
+                                                        if (isRadio) handleComplementToggle(group, item, true);
+                                                        else handleComplementToggle(group, item, !isSelected);
+                                                    }
+                                                }}>
+                                                    <div className="flex items-center space-x-3 w-full pointer-events-none">
+                                                        {/* pointer-events-none ensures the click passes to container handler or we just handle container click only. */}
+                                                        {/* Wait, if we use shadcn checkbox, it is interactive. */}
+                                                        {/* Better approach: Let container handle click, and input just show state to avoid double toggle. */}
+                                                        {group.max_quantity === 1 ? (
+                                                            <div className={`h-4 w-4 rounded-full border border-primary flex items-center justify-center ${isSelected ? 'bg-primary' : ''}`}>
+                                                                {isSelected && <div className="h-2 w-2 rounded-full bg-white" />}
+                                                            </div>
+                                                        ) : (
+                                                            <div className={`h-4 w-4 rounded border border-primary flex items-center justify-center ${isSelected ? 'bg-primary' : ''}`}>
+                                                                {isSelected && <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="white" strokeWidth="2"><path d="M1 4L3.5 6.5L9 1" /></svg>}
+                                                            </div>
+                                                        )}
+                                                        <span className={`flex-1 font-medium ${disabled ? "opacity-50" : ""}`}>
+                                                            {item.name}
+                                                        </span>
+                                                    </div>
+                                                    <span className="font-bold text-gray-700">
+                                                        {item.price > 0 ? `+${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(item.price)}` : t.guest.product.free}
+                                                    </span>
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+                            )
+                        })}
+
+                        <div className="space-y-2 pt-4">
+                            <Label htmlFor="notes" className="font-bold text-gray-700">{t.guest.product.notes}</Label>
                             <textarea
                                 id="notes"
-                                className="w-full min-h-[80px] p-3 rounded-md border border-gray-300 focus:ring-primary focus:border-primary"
+                                className="w-full min-h-[80px] p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary resize-none bg-gray-50"
                                 placeholder="Ex: Tirar cebola, ponto da carne..."
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
@@ -253,33 +289,36 @@ export function ProductModal({ product, isOpen, onClose, onAddToCart }: ProductM
                 </ScrollArea>
 
                 {/* Footer Actions */}
-                <div className="p-4 bg-white border-t border-gray-100 shrink-0">
+                <div className="p-4 bg-white border-t border-gray-100 shrink-0 shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
                     <div className="flex items-center justify-between gap-4 mb-4">
                         <span className="font-medium text-gray-500">{t.guest.product.item_total}</span>
-                        <span className="text-xl font-bold">{new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(calculateTotal())}</span>
+                        <span className="text-2xl font-black text-gray-900">{new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(calculateTotal())}</span>
                     </div>
                     <div className="flex gap-4">
-                        <div className="flex items-center gap-3 bg-gray-100 p-2 rounded-lg">
+                        <div className="flex items-center gap-3 bg-gray-100 p-2 rounded-xl border border-gray-200">
                             <button
                                 onClick={() => handleQuantityChange(-1)}
-                                className="h-8 w-8 flex items-center justify-center bg-white rounded-md shadow-sm hover:scale-105 transition-transform"
+                                className="h-10 w-10 flex items-center justify-center bg-white rounded-lg shadow-sm hover:scale-105 active:scale-95 transition-all text-gray-700"
                             >
                                 <Minus className="h-4 w-4" />
                             </button>
-                            <span className="w-6 text-center font-bold">{quantity}</span>
+                            <span className="w-6 text-center font-bold text-lg">{quantity}</span>
                             <button
                                 onClick={() => handleQuantityChange(1)}
-                                className="h-8 w-8 flex items-center justify-center bg-white rounded-md shadow-sm hover:scale-105 transition-transform"
+                                className="h-10 w-10 flex items-center justify-center bg-white rounded-lg shadow-sm hover:scale-105 active:scale-95 transition-all text-gray-700"
                             >
                                 <Plus className="h-4 w-4" />
                             </button>
                         </div>
                         <Button
-                            className="flex-1 h-12 text-base font-bold"
+                            className={`flex-1 h-14 text-base font-bold rounded-xl shadow-lg shadow-primary/25 transition-all ${!isValid && !isLoading
+                                    ? 'bg-gray-300 text-gray-500 hover:bg-gray-300 cursor-not-allowed shadow-none'
+                                    : 'hover:scale-[1.02] active:scale-[0.98]'
+                                }`}
                             onClick={handleAddToCart}
-                            disabled={isLoading}
+                            disabled={isLoading || !isValid}
                         >
-                            {t.guest.product.add_to_cart}
+                            {!isValid && !isLoading ? 'Selecione os itens' : t.guest.product.add_to_cart}
                         </Button>
                     </div>
                 </div>

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -37,21 +37,45 @@ export const useOrders = () => {
     // Track the latest order timestamp to detect new ones via polling
     const lastOrderDateRef = useRef<string | null>(null);
 
+    const [isPageVisible, setIsPageVisible] = useState(true);
+
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            setIsPageVisible(document.visibilityState === 'visible');
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+    }, []);
+
     const { data: orders = [], isLoading } = useQuery({
         queryKey: ["orders"],
         queryFn: async () => {
+            console.log("Fetching orders...");
             const { data, error } = await supabase
                 .from("orders")
-                .select("*, customers(*), order_items(*)")
+                .select(`
+                    *,
+                    order_items (
+                        *,
+                        product:products(*)
+                    ),
+                    pousada:pousadas(*),
+                    customer:customers(*)
+                `)
                 .order("created_at", { ascending: false });
 
             if (error) {
-                toast.error("Erro ao carregar pedidos");
+                console.error("Error fetching orders:", error);
+                // toast.error("Erro ao carregar pedidos");
+                // Don't toast on polling error to avoid spam
                 throw error;
             }
-            return data as Order[];
+            return data;
         },
-        refetchInterval: 3000, // Poll every 3 seconds as backup for Realtime
+        refetchInterval: isPageVisible ? 3000 : 30000, // Poll every 3s when visible, 30s when background
     });
 
     const updateOrderStatus = useMutation({

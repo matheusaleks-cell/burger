@@ -25,6 +25,7 @@ export interface Product {
     categories?: Category;
     pousada_ids?: string[]; // IDs of pousadas where this product is available (if !available_all)
     product_pousadas?: { pousada_id: string }[]; // Raw join data
+    addons?: any[]; // Populated by frontend transformation
 }
 
 export type ProductInput = Omit<Product, "id" | "categories" | "pousada_ids" | "product_pousadas"> & {
@@ -39,7 +40,28 @@ export const useProducts = () => {
         queryFn: async () => {
             const { data, error } = await supabase
                 .from("products")
-                .select("*, categories(*), product_pousadas(pousada_id)");
+                .select(`
+                    *,
+                    categories(*),
+                    product_pousadas(pousada_id),
+                    product_complement_groups(
+                        display_order,
+                        complement_groups(
+                            id,
+                            name,
+                            min_quantity,
+                            max_quantity,
+                            complement_items(
+                                id,
+                                name,
+                                price,
+                                max_quantity,
+                                is_active
+                            )
+                        )
+                    )
+                `)
+                .order('display_order', { ascending: true });
 
             if (error) {
                 console.error("Error fetching products:", error);
@@ -47,13 +69,29 @@ export const useProducts = () => {
                 return [];
             }
 
-            return (data as any[]).map(p => ({
-                ...p,
-                is_available: p.availability_status === 'available' || !p.availability_status,
-                available_for_delivery: p.available_for_delivery ?? true,
-                available_for_pousada: p.available_for_pousada ?? true,
-                pousada_ids: p.product_pousadas?.map((pp: any) => pp.pousada_id) || []
-            })) as Product[];
+            return (data as any[]).map(p => {
+                // Flatten nested addons
+                const addons = p.product_complement_groups
+                    ?.map((pcg: any) => {
+                        const group = pcg.complement_groups;
+                        if (!group) return null;
+                        return {
+                            ...group,
+                            items: group.complement_items?.filter((i: any) => i.is_active).sort((a: any, b: any) => a.price - b.price) || []
+                        };
+                    })
+                    .filter(Boolean)
+                    .sort((a: any, b: any) => (a.display_order ?? 0) - (b.display_order ?? 0));
+
+                return {
+                    ...p,
+                    is_available: p.availability_status === 'available' || !p.availability_status,
+                    available_for_delivery: p.available_for_delivery ?? true,
+                    available_for_pousada: p.available_for_pousada ?? true,
+                    pousada_ids: p.product_pousadas?.map((pp: any) => pp.pousada_id) || [],
+                    addons: addons || []
+                };
+            }) as Product[];
         },
     });
 

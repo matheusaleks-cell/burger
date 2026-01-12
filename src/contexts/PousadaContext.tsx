@@ -47,13 +47,14 @@ export function PousadaProvider({ children }: { children: ReactNode }) {
             setIsDeliveryMode(true);
             setCurrentPousada(null);
             localStorage.removeItem(POUSADA_STORAGE_KEY);
+            sessionStorage.removeItem(POUSADA_STORAGE_KEY);
             localStorage.setItem("guest_delivery_mode", "true");
         }
         else if (storedDeliveryMode === "true") {
             setIsDeliveryMode(true);
             setCurrentPousada(null);
         }
-        // 3. Fallback: Local Storage Pousada
+        // 3. Fallback: Session Storage Pousada (Changed from localStorage to isolate tabs)
         else if (storedPousadaJson) {
             try {
                 const stored = JSON.parse(storedPousadaJson) as Pousada;
@@ -61,7 +62,7 @@ export function PousadaProvider({ children }: { children: ReactNode }) {
                 setIsDeliveryMode(false);
             } catch (e) {
                 console.error("Error parsing stored pousada", e);
-                localStorage.removeItem(POUSADA_STORAGE_KEY);
+                sessionStorage.removeItem(POUSADA_STORAGE_KEY);
             }
         }
 
@@ -74,7 +75,7 @@ export function PousadaProvider({ children }: { children: ReactNode }) {
             console.log("Setting Pousada Mode");
             setCurrentPousada(pousada);
             setIsDeliveryMode(false);
-            localStorage.setItem(POUSADA_STORAGE_KEY, JSON.stringify(pousada));
+            sessionStorage.setItem(POUSADA_STORAGE_KEY, JSON.stringify(pousada));
             localStorage.removeItem("guest_delivery_mode");
             setSearchParams({ pousada_id: pousada.id });
         } else {
@@ -82,7 +83,7 @@ export function PousadaProvider({ children }: { children: ReactNode }) {
             // Setting Delivery Mode (null pousada)
             setCurrentPousada(null);
             setIsDeliveryMode(true);
-            localStorage.removeItem(POUSADA_STORAGE_KEY);
+            sessionStorage.removeItem(POUSADA_STORAGE_KEY);
             localStorage.setItem("guest_delivery_mode", "true");
             setSearchParams({ delivery: "true" });
         }
