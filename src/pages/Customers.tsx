@@ -73,7 +73,11 @@ export default function Customers() {
         orders (
           id,
           total,
-          created_at
+          created_at,
+          order_items (
+            product_name,
+            quantity
+          )
         )
       `)
       .order("created_at", { ascending: false });
@@ -92,13 +96,34 @@ export default function Customers() {
 
         const lastOrder = orders.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
 
+        // Calculate Favorite Item
+        const itemCounts: Record<string, number> = {};
+        orders.forEach((o: any) => {
+          o.order_items?.forEach((item: any) => {
+            const name = item.product_name;
+            itemCounts[name] = (itemCounts[name] || 0) + (item.quantity || 1);
+          });
+        });
+
+        let favoriteItem = "-";
+        let maxCount = 0;
+
+        Object.entries(itemCounts).forEach(([name, count]) => {
+          if (count > maxCount) {
+            maxCount = count;
+            favoriteItem = name;
+          }
+        });
+
         return {
           ...c,
           totalOrders: orders.length,
           totalSpent: totalSpent,
-          lastOrderDate: lastOrder ? lastOrder.created_at : null
+          lastOrderDate: lastOrder ? lastOrder.created_at : null,
+          favoriteItem
         };
       });
+
       setCustomers(enriched);
     }
     setLoading(false);
@@ -337,6 +362,7 @@ export default function Customers() {
                 <TableHead>Telefone</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead>Estatísticas</TableHead>
+                <TableHead>Favorito</TableHead>
                 <TableHead>Detalhes</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
@@ -366,6 +392,11 @@ export default function Customers() {
                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(customer.totalSpent || 0)}
                       </span>
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm font-medium text-gray-600 truncate max-w-[150px] block" title={(customer as any).favoriteItem}>
+                      {(customer as any).favoriteItem || "-"}
+                    </span>
                   </TableCell>
                   <TableCell>
                     {customer.order_type === "room" && customer.room_number && (

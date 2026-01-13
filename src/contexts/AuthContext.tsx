@@ -139,7 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signIn,
     signOut,
     createUser,
-    isAdmin: role === "admin" || username === "administrador" || user?.email === "administrador@pousadamanager.local",
+    isAdmin: role === "admin",
     isAttendant: role === "attendant",
     isKitchen: role === "kitchen",
   };

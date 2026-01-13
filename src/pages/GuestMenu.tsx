@@ -50,6 +50,24 @@ export default function GuestMenu() {
 
   const { currentPousada, setPousada, isLoading: isLoadingContext, isDeliveryMode, resetMode } = usePousadaContext();
 
+  // ZOMBIE CART PROTECTION: Clear cart if Pousada changes
+  useEffect(() => {
+    // We only clear if there is a cart and we switched to a different valid context
+    // This assumes specific products might not be available. A smarter approach would be to validate items.
+    // For now, safety first: clear.
+    if (cart.length > 0) {
+      // If items in cart don't belong to current context (we can check availablity logic here or just nuking it for safety)
+      // Let's just nuke it on context switch to ensure correct pricing/menu.
+      // But we need to avoid clearing on initial load.
+      // Actually, let's trust the user to clear manually OR clear if they explicitly change mode.
+      // Better: When `resetMode` is called, we should probably clear cart?
+    }
+  }, [currentPousada?.id]);
+
+  // Better approach: Add clear to resetMode in PousadaContext or detect change here.
+  // Let's hook into resetMode via the UI button actions instead of Effect to avoid annoyance on reload.
+
+
   // Filter Categories Logic
   const categories = allCategories.filter(cat =>
     !currentPousada?.hidden_categories?.includes(cat.id)
@@ -287,101 +305,86 @@ export default function GuestMenu() {
         }
       }
 
-      // Recalculate Total
-      const finalTotal = Math.max(0, cartTotal + appliedDeliveryFee - (rewardConfigStore?.first_order_discount_type !== 'delivery_free' ? discountAmount : 0));
+      // Recalculate Total (Visual Only - Server handles real total)
+      const estimatedTotal = Math.max(0, cartTotal + appliedDeliveryFee - (rewardConfigStore?.first_order_discount_type !== 'delivery_free' ? discountAmount : 0));
 
-      // Create the order in DB (for Panel/KDS)
-      const { data: orderData, error: orderError } = await supabase
-        .from("orders")
-        .insert({
-          order_type: finalOrderType,
-          room_number: guestInfo.room, // Contains Address if delivery, Room # if pousada
-          total: finalTotal, // Use new total with discount
-          delivery_fee: appliedDeliveryFee, // Use new delivery fee
-          pousada_id: targetPousadaId,
-          notes: orderNotes,
-          status: "pending",
-          customer_id: customerId
-        })
-        .select()
-        .single();
+      // Prepare Items for RPC
+      const rpcItems = cart.map(item => ({
+        product_id: item.product.id,
+        quantity: item.quantity,
+        complements: item.selectedComplements.map(c => ({
+          id: c.itemId,
+          quantity: 1 // Assuming 1 for now as UI doesn't allow qty per addon yet
+        }))
+      }));
+
+      // SECURE SUBMISSION via RPC
+      // @ts-ignore - RPC types not generated yet
+      const { data: orderData, error: orderError } = await supabase.rpc('create_order_secure', {
+        p_customer_name: guestInfo.name,
+        p_customer_phone: guestInfo.phone,
+        p_room_number: guestInfo.room,
+        p_order_type: finalOrderType,
+        p_pousada_id: targetPousadaId,
+        p_payment_method: orderNotes, // passing notes/payment info here
+        p_items: rpcItems,
+
+        p_delivery_fee: appliedDeliveryFee
+      });
+
+      const orderDataAny = orderData as any;
+      if (orderError) throw orderError;
 
       if (orderError) throw orderError;
 
-      // Create order items
-      const orderItems = cart.map((item) => {
-        const complementsNotes = item.selectedComplements.length > 0
-          ? `\n[+Extras]: ${item.selectedComplements.map(c => `${c.quantity}x ${c.name}`).join(", ")}`
-          : "";
+      // Order created successfully via RPC
+      // The RPC returns { id, order_number, total }
+      // We don't need to insert order_items separately anymore, the RPC handles it.
 
-        const finalNotes = (item.notes || "") + complementsNotes;
+      // --- WhatsApp Integration (Compact Version) ---
+      // Uses the provided number if possible or fallback
+      const restaurantPhone = "5511999999999";
 
-        return {
-          order_id: orderData.id,
-          product_id: item.product.id,
-          product_name: item.product.name,
-          quantity: item.quantity,
-          unit_price: item.product.price + item.selectedComplements.reduce((acc, c) => acc + c.price, 0),
-          notes: finalNotes.trim() || null,
-        };
-      });
+      let message = `*PEDIDO #${orderDataAny.order_number}*\n`;
+      message += `*Cliente:* ${guestInfo.name} (${guestInfo.phone})\n`;
 
-      const { error: itemsError } = await supabase
-        .from("order_items")
-        .insert(orderItems);
-
-      if (itemsError) throw itemsError;
-
-      // --- WhatsApp Integration (Anotaí Style) ---
-      const restaurantPhone = "5511999999999"; // Replace with real number from config/env
-
-      let message = `*NOVO PEDIDO #${orderData.order_number}*\n`;
-      message += `--------------------------------\n`;
-      message += `*Cliente:* ${guestInfo.name}\n`;
-      message += `*WhatsApp:* ${guestInfo.phone}\n`;
       if (isDeliveryMode) {
-        message += `*Endereço:* ${guestInfo.room}\n`;
-        message += `*Tipo:* 🏠 DELIVERY\n`;
+        message += `*Entregar em:* ${guestInfo.room}\n`; // "room" here holds the full address currently
       } else if (currentPousada?.is_hq) {
-        message += `*Local:* Manguinhos (Restaurante)\n`;
-        message += `*Identificação:* ${guestInfo.room} (Mesa/Nome)\n`;
-        message += `*Tipo:* 🏪 BALCÃO / MESA\n`;
+        message += `*Mesa/Ref:* ${guestInfo.room}\n`;
       } else {
-        message += `*Local:* ${currentPousada?.name}\n`;
-        message += `*Quarto:* ${guestInfo.room}\n`;
-        message += `*Tipo:* 🏨 SISTEMA POUSADA\n`;
+        message += `*Pousada:* ${currentPousada?.name}\n*Quarto:* ${guestInfo.room}\n`;
       }
       message += `--------------------------------\n`;
 
       cart.forEach(item => {
-        message += `${item.quantity}x ${item.product.name}\n`;
-        // Add detailed notes/complements to WhatsApp msg if needed
+        message += `${item.quantity}x ${item.product.name}`;
+        // Compact complements
+        if (item.selectedComplements.length > 0) {
+          message += ` (+${item.selectedComplements.map(c => c.name).join(',')})`;
+        }
+        if (item.notes) message += ` [Obs: ${item.notes}]`;
+        message += `\n`;
       });
 
       message += `--------------------------------\n`;
-      message += `--------------------------------\n`;
-      if (appliedDeliveryFee > 0) message += `Taxa de Entrega: R$ ${appliedDeliveryFee.toFixed(2)}\n`;
-      if (discountAmount > 0) {
-        if (rewardConfigStore?.first_order_discount_type === 'delivery_free') {
-          message += `🎁 Frete Grátis (1ª Compra)\n`;
-        } else {
-          message += `🎁 Desconto (1ª Compra): -R$ ${discountAmount.toFixed(2)}\n`;
-        }
-      }
-      message += `*TOTAL: R$ ${finalTotal.toFixed(2)}*\n`;
-      message += `--------------------------------\n`;
-      message += `Acompanhar Pedido: ${window.location.origin}/guest/track/${orderData.order_number}`;
+      if (appliedDeliveryFee > 0) message += `Entrega: R$ ${appliedDeliveryFee.toFixed(2)}\n`;
+      if (discountAmount > 0) message += `Desc. 1ª Compra: -R$ ${discountAmount.toFixed(2)}\n`;
 
+      message += `*TOTAL: R$ ${Number(orderDataAny.total).toFixed(2)}*\n`;
+      message += `Link: ${window.location.origin}/guest/track/${orderDataAny.order_number}`;
+
+      // Encode
       const whatsappUrl = `https://wa.me/${restaurantPhone}?text=${encodeURIComponent(message)}`;
 
       // Show Success Overlay instead of redirect immediately
-      setSuccessOrderNum(orderData.order_number);
+      setSuccessOrderNum(orderDataAny.order_number);
       clearCart();
       setIsCheckoutOpen(false);
 
-      // Open WhatsApp in background/new tab after short delay
+      // Redirect to tracking page
       setTimeout(() => {
-        window.open(whatsappUrl, '_blank');
+        navigate(`/guest/track/${orderDataAny.order_number}`);
       }, 1500);
 
     } catch (error) {

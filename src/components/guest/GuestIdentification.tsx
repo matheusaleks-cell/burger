@@ -13,13 +13,16 @@ import { useLanguage } from "@/contexts/LanguageContext";
 
 interface GuestInfo {
     name: string;
-    room: string;
+    room: string; // Used as "Address String" for delivery or "Room Number" for pousada
     phone: string;
     latitude: number | null;
     longitude: number | null;
     address_complement?: string;
+    // Structured Address Fields (Optional, mostly for Delivery)
     street?: string;
     number?: string;
+    neighborhood?: string;
+    complement?: string;
     neighborhood_id?: string;
     reference?: string;
 }
@@ -53,8 +56,28 @@ export function GuestIdentification({ guestInfo, setGuestInfo, onIdentify, pousa
     };
 
     const handleFieldChange = (field: keyof GuestInfo, value: string) => {
-        const updated = { ...guestInfo, [field]: value };
-        setGuestInfo(updateAddressString(updated));
+        let finalValue = value;
+        // Simple Phone Mask (XX) XXXXX-XXXX
+        if (field === 'phone') {
+            finalValue = value.replace(/\D/g, "")
+                .replace(/^(\d{2})(\d)/g, "($1) $2")
+                .replace(/(\d)(\d{4})$/, "$1-$2");
+        }
+
+        const updated = { ...guestInfo, [field]: finalValue };
+
+        // If in delivery mode, auto-generate the 'room' string from address components
+        if (selectedPousadaId === 'delivery' || (!selectedPousadaId && guestInfo.street)) {
+            const addressParts = [
+                updated.street,
+                updated.number ? `Nº ${updated.number}` : '',
+                updated.neighborhood,
+                updated.complement ? `(${updated.complement})` : ''
+            ].filter(Boolean);
+            updated.room = addressParts.join(', ');
+        }
+
+        setGuestInfo(updated); // We don't need updateAddressString wrapper if we do it inline here especially since updateAddressString used old logic
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -220,7 +243,8 @@ export function GuestIdentification({ guestInfo, setGuestInfo, onIdentify, pousa
                             <Input
                                 placeholder={t.guest.phone_placeholder}
                                 value={guestInfo.phone}
-                                onChange={(e) => setGuestInfo({ ...guestInfo, phone: e.target.value })}
+                                onChange={(e) => handleFieldChange("phone", e.target.value)}
+                                maxLength={15}
                                 required
                                 className={`h-12 bg-gray-50 border-gray-200 transition-all ${theme.ring}`}
                             />
@@ -228,7 +252,7 @@ export function GuestIdentification({ guestInfo, setGuestInfo, onIdentify, pousa
 
                         {/* MODE SPECIFIC FIELDS */}
                         {mode === 'delivery' && (
-                            <>
+                            <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2">
                                 <div className="space-y-2">
                                     <Label className="text-sm font-bold text-gray-700">Selecione seu Bairro</Label>
                                     <Select
@@ -248,38 +272,44 @@ export function GuestIdentification({ guestInfo, setGuestInfo, onIdentify, pousa
                                         </SelectContent>
                                     </Select>
                                 </div>
-                                <div className="grid grid-cols-3 gap-2">
-                                    <div className="col-span-2 space-y-2">
-                                        <Label className="text-sm font-bold text-gray-700">Rua / Logradouro</Label>
+                                <div className="grid grid-cols-[1fr,80px] gap-2">
+                                    <div className="space-y-2">
+                                        <Label className="text-sm font-bold text-gray-700">Rua</Label>
                                         <Input
                                             value={guestInfo.street || ""}
                                             onChange={(e) => handleFieldChange('street', e.target.value)}
                                             required
-                                            placeholder="Nome da Rua"
-                                            className={`h-12 bg-gray-50 border-gray-200 ${theme.ring}`}
+                                            placeholder="Rua / Av"
+                                            className={`bg-gray-50 border-gray-200 ${theme.ring}`}
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label className="text-sm font-bold text-gray-700">Número</Label>
+                                        <Label className="text-sm font-bold text-gray-700">Nº</Label>
                                         <Input
                                             value={guestInfo.number || ""}
                                             onChange={(e) => handleFieldChange('number', e.target.value)}
                                             required
-                                            placeholder="Nº"
-                                            className={`h-12 bg-gray-50 border-gray-200 ${theme.ring}`}
+                                            placeholder="123"
+                                            className={`bg-gray-50 border-gray-200 ${theme.ring}`}
                                         />
                                     </div>
                                 </div>
+
                                 <div className="space-y-2">
-                                    <Label className="text-sm font-bold text-gray-700">Referência / Complemento</Label>
+                                    <Label className="text-sm font-bold text-gray-700">Complemento / Ref.</Label>
                                     <Input
-                                        value={guestInfo.reference || ""}
-                                        onChange={(e) => handleFieldChange('reference', e.target.value)}
-                                        placeholder="Próximo a..."
+                                        value={guestInfo.complement || ""}
+                                        onChange={(e) => handleFieldChange('complement', e.target.value)}
+                                        placeholder="Ap 101 / Ao lado da escola..."
                                         className={`h-12 bg-gray-50 border-gray-200 ${theme.ring}`}
                                     />
                                 </div>
-                            </>
+                                {/* Hidden Neighborhood Field since we use Select now but store it in 'neighborhood' string? 
+                                    Actually the original code didn't have a 'neighborhood' string field in UI separate from ID. 
+                                    Let's rely on Select for ID and maybe auto-fill name if needed? 
+                                    For now just ID + Street + Number + Complement is enough for Address String.
+                                */}
+                            </div>
                         )}
 
                         {mode === 'pousada' && (

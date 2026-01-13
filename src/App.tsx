@@ -29,6 +29,7 @@ const GuestTrack = React.lazy(() => import("./pages/GuestTrack"));
 const MenuManagement = React.lazy(() => import("./pages/MenuManagement"));
 const Addons = React.lazy(() => import("./pages/Addons"));
 const Neighborhoods = React.lazy(() => import("./pages/admin/Neighborhoods"));
+const GuestLinks = React.lazy(() => import("./pages/GuestLinks"));
 
 const queryClient = new QueryClient();
 
@@ -90,6 +91,7 @@ function AppRoutes() {
     }>
       <Routes>
         {/* Guest routes (no auth required) */}
+        <Route path="/links" element={<GuestLinks />} />
         <Route path="/" element={<GuestMenu />} />
         <Route path="/guest/menu" element={<Navigate to="/" replace />} />
         <Route path="/guest/track/:orderNumber" element={<GuestTrack />} />

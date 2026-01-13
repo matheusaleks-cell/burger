@@ -351,6 +351,17 @@ export default function GuestTrack() {
                 </div>
               </div>
             )}
+
+            <Button
+              variant="outline"
+              className="w-full mt-6 h-12 rounded-xl font-bold border-green-200 text-green-700 hover:bg-green-50 gap-2"
+              onClick={() => {
+                const message = `Olá! Gostaria de acompanhar meu pedido #${order.order_number}.`;
+                window.open(`https://wa.me/5511999999999?text=${encodeURIComponent(message)}`, '_blank');
+              }}
+            >
+              <Phone className="h-4 w-4" /> Acompanhar pelo WhatsApp
+            </Button>
           </CardContent>
         </Card>
 

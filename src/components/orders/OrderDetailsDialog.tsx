@@ -140,11 +140,14 @@ export function OrderDetailsDialog({ order, isOpen, onClose }: OrderDetailsDialo
                                         <Phone className="h-3 w-3" /> {order.customers.phone}
                                     </p>
                                 )}
-                                {/* Address if delivery (using notes hack or future address field if implemented) */}
+                                {/* Address if delivery */}
                                 {order.order_type === 'delivery' && (
-                                    <div className="mt-3 p-3 bg-orange-50 text-orange-800 rounded-xl text-sm font-medium flex items-start gap-2">
-                                        <MapPin className="h-4 w-4 shrink-0 mt-0.5" />
-                                        <span>Verificar endereço nas observações ou cadastro</span>
+                                    <div className="mt-3 p-3 bg-orange-50 text-orange-800 rounded-xl text-sm font-medium space-y-1">
+                                        <div className="flex items-start gap-2">
+                                            <MapPin className="h-4 w-4 shrink-0 mt-0.5" />
+                                            <span>{order.room_number || "Endereço não informado"}</span>
+                                        </div>
+                                        {/* Additional check for fee in notes or we could add a proper column later. For now, we assume room_number holds address. */}
                                     </div>
                                 )}
                             </div>
@@ -184,54 +187,64 @@ export function OrderDetailsDialog({ order, isOpen, onClose }: OrderDetailsDialo
                                 </div>
                             ))}
                         </div>
-                    </div>
-
-                    {/* Payment & Notes */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                            <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                <CreditCard className="h-4 w-4" /> Pagamento
-                            </h3>
-                            <div className="space-y-2">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-gray-500 font-medium text-sm">Método</span>
-                                    <Badge variant="outline" className="uppercase font-bold">
-                                        {order.payment_method || "Não informado"}
-                                    </Badge>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-gray-500 font-medium text-sm">Status</span>
-                                    <Badge className={order.status === 'delivered' ? 'bg-green-500' : 'bg-yellow-500'}>
-                                        {order.status === 'delivered' ? 'Pago' : 'Pendente'}
-                                    </Badge>
-                                </div>
+                        {order.order_type === 'delivery' && (
+                            <div className="p-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between text-sm rounded-b-2xl -mx-5 -mb-5 mt-4">
+                                <span className="font-bold text-gray-500">Taxa de Entrega</span>
+                                <span className="font-bold text-gray-900">
+                                    {formatCurrency(calculateTotal() - (order.order_items?.reduce((acc, item) => acc + (item.unit_price * item.quantity), 0) || 0))}
+                                </span>
                             </div>
-                        </div>
-
-                        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                            <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                <Receipt className="h-4 w-4" /> Observações
-                            </h3>
-                            <p className="text-sm text-gray-600 font-medium italic">
-                                {order.notes || "Nenhuma observação no pedido."}
-                            </p>
-                        </div>
+                        )}
                     </div>
+
                 </div>
 
-                <DialogFooter className="p-6 bg-white border-t border-gray-100 gap-3">
-                    <Button
-                        variant="outline"
-                        className="flex-1 h-12 font-bold gap-2"
-                        onClick={handlePrint}
-                    >
-                        <Printer className="h-4 w-4" /> Imprimir Cupom
-                    </Button>
-                    <Button onClick={onClose} className="flex-1 h-12 font-bold bg-gray-900 text-white hover:bg-black">
-                        Fechar Detalhes
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+                {/* Payment & Notes */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                        <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <CreditCard className="h-4 w-4" /> Pagamento
+                        </h3>
+                        <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-500 font-medium text-sm">Método</span>
+                                <Badge variant="outline" className="uppercase font-bold">
+                                    {order.payment_method || "Não informado"}
+                                </Badge>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-500 font-medium text-sm">Status</span>
+                                <Badge className={order.status === 'delivered' ? 'bg-green-500' : 'bg-yellow-500'}>
+                                    {order.status === 'delivered' ? 'Pago' : 'Pendente'}
+                                </Badge>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                        <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <Receipt className="h-4 w-4" /> Observações
+                        </h3>
+                        <p className="text-sm text-gray-600 font-medium italic">
+                            {order.notes || "Nenhuma observação no pedido."}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <DialogFooter className="p-6 bg-white border-t border-gray-100 gap-3">
+                <Button
+                    variant="outline"
+                    className="flex-1 h-12 font-bold gap-2"
+                    onClick={handlePrint}
+                >
+                    <Printer className="h-4 w-4" /> Imprimir Cupom
+                </Button>
+                <Button onClick={onClose} className="flex-1 h-12 font-bold bg-gray-900 text-white hover:bg-black">
+                    Fechar Detalhes
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+        </Dialog >
     );
 }
