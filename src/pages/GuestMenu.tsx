@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -45,10 +45,15 @@ interface GuestInfoState {
 export default function GuestMenu() {
   const navigate = useNavigate();
   const { products, isLoading: isLoadingProducts } = useProducts();
-  const { data: categories = [], isLoading: isLoadingCategories } = useCategories();
+  const { data: allCategories = [], isLoading: isLoadingCategories } = useCategories();
   const { addToCart, clearCart, cartTotal, cart } = useCart();
 
   const { currentPousada, setPousada, isLoading: isLoadingContext, isDeliveryMode, resetMode } = usePousadaContext();
+
+  // Filter Categories Logic
+  const categories = allCategories.filter(cat =>
+    !currentPousada?.hidden_categories?.includes(cat.id)
+  );
   const { pousadas } = usePousadas();
   const { neighborhoods } = useNeighborhoods();
 
@@ -388,37 +393,39 @@ export default function GuestMenu() {
   };
 
   // Filter products by availability
-  const visibleProducts = products.filter(product => {
-    // 1. Text search
-    if (searchQuery && !product.name.toLowerCase().includes(searchQuery.toLowerCase())) {
-      return false;
-    }
-    // 2. Availability (Available All OR Pousada Included)
-    // If Delivery Mode: Only show available_all products (or handled by 'available_all' logic)
-    // If Pousada Mode: Show available_all OR products specific to that pousada
-    if (isDeliveryMode) {
-      return product.available_all;
-    }
+  const visibleProducts = useMemo(() => {
+    return products.filter(product => {
+      // 1. Text search
+      if (searchQuery && !product.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+        return false;
+      }
+      // 2. Availability (Available All OR Pousada Included)
+      // If Delivery Mode: Only show available_all products (or handled by 'available_all' logic)
+      // If Pousada Mode: Show available_all OR products specific to that pousada
+      if (isDeliveryMode) {
+        return product.available_all;
+      }
 
-    // Pousada Mode (Partner or HQ)
-    // If it's HQ, we should technically see everything available_all + items specific to HQ.
-    // Ideally, 'available_all' means "Global Menu".
-    // "pousada_ids" means "Restricted to specific pousadas".
+      // Pousada Mode (Partner or HQ)
+      // If it's HQ, we should technically see everything available_all + items specific to HQ.
+      // Ideally, 'available_all' means "Global Menu".
+      // "pousada_ids" means "Restricted to specific pousadas".
 
-    // Logic:
-    // 1. Context Filter (Delivery vs Pousada)
-    if (isDeliveryMode && !product.available_for_delivery) return false;
-    if (!isDeliveryMode && !product.available_for_pousada) return false;
+      // Logic:
+      // 1. Context Filter (Delivery vs Pousada)
+      if (isDeliveryMode && !product.available_for_delivery) return false;
+      if (!isDeliveryMode && !product.available_for_pousada) return false;
 
-    // 2. If product is available_all => Show
-    // 3. If product is restricted (available_all=false):
-    //    - Show ONLY if currentPousada.id is in pousada_ids
+      // 2. If product is available_all => Show
+      // 3. If product is restricted (available_all=false):
+      //    - Show ONLY if currentPousada.id is in pousada_ids
 
-    const isGlobal = product.available_all;
-    const isSpecificToThisPousada = currentPousada && product.pousada_ids?.includes(currentPousada.id);
+      const isGlobal = product.available_all;
+      const isSpecificToThisPousada = currentPousada && product.pousada_ids?.includes(currentPousada.id);
 
-    return isGlobal || isSpecificToThisPousada;
-  });
+      return isGlobal || isSpecificToThisPousada;
+    });
+  }, [products, searchQuery, isDeliveryMode, currentPousada]);
 
   if (isLoadingProducts || isLoadingCategories || isLoadingContext) {
     return (

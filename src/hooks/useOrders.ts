@@ -75,7 +75,7 @@ export const useOrders = () => {
             }
             return data;
         },
-        refetchInterval: isPageVisible ? 3000 : 30000, // Poll every 3s when visible, 30s when background
+        refetchInterval: isPageVisible ? 60000 : 300000, // Poll every 60s when visible, 5min when background (Safeguard for realtime)
     });
 
     const updateOrderStatus = useMutation({

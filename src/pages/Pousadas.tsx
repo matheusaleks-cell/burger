@@ -25,6 +25,9 @@ import { Hotel, Plus, Pencil, Trash2, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Pousada } from "@/hooks/usePousadas";
+import { useCategories } from "@/hooks/useCategories";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function Pousadas() {
   const { isAdmin } = useAuth();
@@ -43,8 +46,11 @@ export default function Pousadas() {
     delivery_radius_km: "5",
     base_delivery_fee: "0",
     fee_per_km: "1.50",
-    is_hq: false
+    is_hq: false,
+    hidden_categories: [] as string[]
   });
+
+  const { data: categories = [] } = useCategories();
 
   useEffect(() => {
     fetchPousadas();
@@ -96,7 +102,8 @@ export default function Pousadas() {
       delivery_radius_km: radius,
       base_delivery_fee: baseFee,
       fee_per_km: kmFee,
-      is_hq: form.is_hq
+      is_hq: form.is_hq,
+      hidden_categories: form.hidden_categories || []
     };
 
     console.log("Submitting Pousada Data:", pousadaData);
@@ -142,7 +149,8 @@ export default function Pousadas() {
       delivery_radius_km: pousada.delivery_radius_km?.toString() || "5",
       base_delivery_fee: pousada.base_delivery_fee?.toString() || "0",
       fee_per_km: pousada.fee_per_km?.toString() || "1.50",
-      is_hq: pousada.is_hq || false
+      is_hq: pousada.is_hq || false,
+      hidden_categories: pousada.hidden_categories || []
     });
     setIsDialogOpen(true);
   };
@@ -187,7 +195,8 @@ export default function Pousadas() {
       delivery_radius_km: "5",
       base_delivery_fee: "0",
       fee_per_km: "1.50",
-      is_hq: false
+      is_hq: false,
+      hidden_categories: []
     });
   };
 
@@ -339,7 +348,38 @@ export default function Pousadas() {
                         placeholder="1.50"
                       />
                     </div>
+                    <div className="space-y-2 col-span-2">
+                      <Label>Categorias Ocultas (Não exibir neste cardápio)</Label>
+                      <ScrollArea className="h-[150px] w-full border rounded-md p-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          {categories.map((cat) => (
+                            <div key={cat.id} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`cat-${cat.id}`}
+                                checked={form.hidden_categories.includes(cat.id)}
+                                onCheckedChange={(checked) => {
+                                  let newHidden = [...form.hidden_categories];
+                                  if (checked) {
+                                    newHidden.push(cat.id);
+                                  } else {
+                                    newHidden = newHidden.filter(id => id !== cat.id);
+                                  }
+                                  setForm({ ...form, hidden_categories: newHidden });
+                                }}
+                              />
+                              <Label
+                                htmlFor={`cat-${cat.id}`}
+                                className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                              >
+                                {cat.name}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    </div>
                   </div>
+
 
                   <Button type="submit" className="w-full mt-6">
                     {editingPousada ? "Salvar Alterações" : "Criar Local"}
@@ -437,6 +477,6 @@ export default function Pousadas() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </div >
   );
 }
