@@ -8,12 +8,17 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useProducts, Product } from "@/hooks/useProducts";
-import { CartItem, useCart } from "@/contexts/CartContext";
+import { CartItem, useCart, SelectedComplement } from "@/contexts/CartContext";
 import { Minus, Plus, ArrowRight, Truck, CreditCard, QrCode, Banknote, AlertCircle, Check } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-function UpsellSection({ cart, addToCart }: { cart: CartItem[], addToCart: any }) {
+interface UpsellProps {
+    cart: CartItem[];
+    addToCart: (product: Product, quantity: number, complements: SelectedComplement[], notes: string) => void;
+}
+
+function UpsellSection({ cart, addToCart }: UpsellProps) {
     const { products } = useProducts();
 
     // Logic to find missing categories
