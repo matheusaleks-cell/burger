@@ -46,12 +46,20 @@ export function GuestHeader({ guestInfo, onChangeIdentity, searchQuery, setSearc
                             <img src={logoUrl} alt="Logo" className="h-10 w-auto object-contain mr-3 rounded-md" />
                         )}
                         <div className="min-w-0">
-                            <p className={`text-[10px] uppercase tracking-wider font-bold ${isDeliveryMode ? 'text-emerald-600' : 'text-gray-400'}`}>{identityLabel}</p>
-                            <h2 className={`text-sm font-bold flex items-center ${isDeliveryMode ? 'text-emerald-900' : 'text-gray-900'}`}>
-                                <span className="truncate max-w-[150px] sm:max-w-md block leading-tight">
-                                    {identityValue} - {guestInfo.name}
-                                </span>
-                            </h2>
+                            {guestInfo.name ? (
+                                <>
+                                    <p className={`text-[10px] uppercase tracking-wider font-bold ${isDeliveryMode ? 'text-emerald-600' : 'text-gray-400'}`}>{identityLabel}</p>
+                                    <h2 className={`text-sm font-bold flex items-center ${isDeliveryMode ? 'text-emerald-900' : 'text-gray-900'}`}>
+                                        <span className="truncate max-w-[150px] sm:max-w-md block leading-tight">
+                                            {identityValue} - {guestInfo.name}
+                                        </span>
+                                    </h2>
+                                </>
+                            ) : (
+                                <h2 className="text-sm font-bold text-gray-500">
+                                    Olá! Identifique-se para fazer o pedido
+                                </h2>
+                            )}
                         </div>
                     </div>
                     <Button
@@ -60,7 +68,7 @@ export function GuestHeader({ guestInfo, onChangeIdentity, searchQuery, setSearc
                         className={`font-bold shrink-0 ${isDeliveryMode ? 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-100' : 'text-primary'}`}
                         onClick={onChangeIdentity}
                     >
-                        {t.guest.header.change}
+                        {guestInfo.name ? t.guest.header.change : "Entrar"}
                     </Button>
                 </div>
 
