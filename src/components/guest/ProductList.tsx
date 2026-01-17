@@ -7,6 +7,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 interface Category {
     id: string;
     name: string;
+    is_featured?: boolean;
 }
 
 interface ProductListProps {
@@ -62,22 +63,30 @@ export function ProductList({
 
                     return (
                         <div key={category.id} className="space-y-4">
-                            <h3 className={`text-xl font-bold ml-1 ${isDeliveryMode ? 'text-emerald-900' : 'text-gray-800'}`}>{category.name}</h3>
-                            <div className="grid gap-4 md:grid-cols-2">
+                            <div className="flex items-center gap-2">
+                                {category.is_featured && <span className="text-2xl animate-pulse">⭐</span>}
+                                <h3 className={`font-bold ml-1 ${isDeliveryMode ? 'text-emerald-900' : 'text-gray-800'} ${category.is_featured ? 'text-3xl uppercase tracking-tighter' : 'text-xl'}`}>
+                                    {category.name}
+                                </h3>
+                            </div>
+
+                            <div className={`grid gap-4 ${category.is_featured ? 'grid-cols-1' : 'md:grid-cols-2'}`}>
                                 {catProducts.map((product) => (
                                     <Card
                                         key={product.id}
-                                        className={`group relative flex overflow-hidden border bg-white shadow-sm hover:shadow-lg transition-all duration-300 rounded-2xl cursor-pointer ${isDeliveryMode
-                                            ? 'border-emerald-100 hover:border-emerald-300'
-                                            : 'border-gray-100 hover:border-primary/20'
-                                            }`}
+                                        className={`group relative flex overflow-hidden border bg-white shadow-sm hover:shadow-lg transition-all duration-300 rounded-2xl cursor-pointer 
+                                        ${isDeliveryMode
+                                                ? 'border-emerald-100 hover:border-emerald-300'
+                                                : 'border-gray-100 hover:border-primary/20'
+                                            }
+                                        ${category.is_featured ? 'border-l-4 border-l-yellow-400' : ''}`}
                                         onClick={() => onProductClick(product)}
                                     >
                                         {/* Content Section */}
                                         <div className="flex-1 p-5 flex flex-col justify-between z-10">
                                             <div className="space-y-2">
-                                                <h4 className={`font-bold text-lg leading-tight transition-colors ${isDeliveryMode ? 'text-gray-900 group-hover:text-emerald-700' : 'text-gray-800 group-hover:text-primary'
-                                                    }`}>
+                                                <h4 className={`font-bold leading-tight transition-colors ${isDeliveryMode ? 'text-gray-900 group-hover:text-emerald-700' : 'text-gray-800 group-hover:text-primary'
+                                                    } ${category.is_featured ? 'text-xl' : 'text-lg'}`}>
                                                     {product.name}
                                                 </h4>
                                                 <p className="text-gray-500 text-sm line-clamp-2 leading-relaxed font-medium">
@@ -103,7 +112,7 @@ export function ProductList({
 
                                         {/* Image Section */}
                                         {product.image_url && (
-                                            <div className="w-32 h-auto relative shrink-0">
+                                            <div className={`${category.is_featured ? 'w-48' : 'w-32'} h-auto relative shrink-0`}>
                                                 <img
                                                     src={product.image_url}
                                                     alt={product.name}

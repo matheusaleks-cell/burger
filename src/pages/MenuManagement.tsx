@@ -91,7 +91,8 @@ export default function MenuManagement() {
     const [formData, setFormData] = useState({
         name: "",
         description: "",
-        is_active: true
+        is_active: true,
+        is_featured: false
     });
 
     useEffect(() => {
@@ -174,14 +175,16 @@ export default function MenuManagement() {
             setFormData({
                 name: category.name,
                 description: category.description || "",
-                is_active: category.is_active
+                is_active: category.is_active,
+                is_featured: category.is_featured || false
             });
         } else {
             setEditingCategory(null);
             setFormData({
                 name: "",
                 description: "",
-                is_active: true
+                is_active: true,
+                is_featured: false
             });
         }
         setIsDialogOpen(true);
@@ -281,6 +284,18 @@ export default function MenuManagement() {
                                     />
                                     <Label>Categoria Ativa</Label>
                                 </div>
+                                <div className="flex items-center gap-2">
+                                    <Switch
+                                        checked={formData.is_featured}
+                                        onCheckedChange={checked => setFormData({ ...formData, is_featured: checked })}
+                                    />
+                                    <Label className="flex items-center gap-1">
+                                        Em Destaque
+                                        <Badge variant="outline" className="text-[10px] h-4 bg-yellow-50 text-yellow-700 border-yellow-200">
+                                            Estrela
+                                        </Badge>
+                                    </Label>
+                                </div>
                                 <Button type="submit" className="w-full mt-4">
                                     {editingCategory ? "Salvar Alterações" : "Criar Categoria"}
                                 </Button>
@@ -315,6 +330,7 @@ export default function MenuManagement() {
                                                     <span className={category.is_active ? "font-bold text-slate-700" : "font-bold text-slate-400 line-through"}>
                                                         {category.name}
                                                     </span>
+                                                    {category.is_featured && <span className="text-yellow-500 text-xs">★</span>}
                                                     {!category.is_active && <Badge variant="secondary" className="text-[9px] px-1 h-4">Inativo</Badge>}
                                                 </div>
                                                 <span className="text-[10px] text-muted-foreground">{orderedProducts.filter(p => p.category_id === category.id).length} itens</span>

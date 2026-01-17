@@ -5,6 +5,7 @@ interface Category {
     id: string;
     name: string;
     display_order: number;
+    is_featured?: boolean;
 }
 
 interface CategoryNavProps {
@@ -38,12 +39,13 @@ export function CategoryNav({ categories, selectedCategory, setSelectedCategory,
                         key={category.id}
                         onClick={() => setSelectedCategory(category.id)}
                         className={`
-              items-center justify-center px-4 py-2.5 rounded-full whitespace-nowrap transition-all font-bold text-sm shadow-sm
+              flex items-center gap-1.5 px-4 py-2.5 rounded-full whitespace-nowrap transition-all font-bold text-sm shadow-sm
               ${selectedCategory === category.id
                                 ? (isDeliveryMode ? "bg-emerald-600 text-white shadow-emerald-200" : "bg-primary text-primary-foreground shadow-primary/25") + " shadow-lg scale-105"
                                 : "bg-white text-gray-500 border border-gray-100 hover:bg-gray-50 " + (isDeliveryMode ? "hover:border-emerald-200" : "hover:border-primary/50")}
             `}
                     >
+                        {category.is_featured && <span className="text-yellow-500 text-xs">★</span>}
                         {category.name}
                     </button>
                 ))}
