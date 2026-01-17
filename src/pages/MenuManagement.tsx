@@ -27,6 +27,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { ProductFormDialog } from "@/components/products/ProductFormDialog";
 
 interface SortableItemProps {
     id: string;
@@ -94,6 +95,29 @@ export default function MenuManagement() {
         is_active: true,
         is_featured: false
     });
+
+    // Product Editing State
+    const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
+    const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+    const { updateProduct } = useProducts();
+
+    const handleEditProduct = (product: Product) => {
+        setEditingProduct(product);
+        setIsProductDialogOpen(true);
+    };
+
+    const handleProductSubmit = (data: any) => {
+        const { complementGroupIds, ...productSubData } = data;
+        if (editingProduct) {
+            updateProduct.mutate({
+                id: editingProduct.id,
+                updates: productSubData,
+                complementGroupIds
+            }, {
+                onSuccess: () => setIsProductDialogOpen(false)
+            });
+        }
+    };
 
     useEffect(() => {
         if (categories.length) {
@@ -396,6 +420,16 @@ export default function MenuManagement() {
                                                         {!product.is_active && (
                                                             <Badge variant="destructive" className="text-[8px] uppercase font-black px-1 h-4">Inativo</Badge>
                                                         )}
+                                                        <div onPointerDown={e => e.stopPropagation()}>
+                                                            <Button
+                                                                size="icon"
+                                                                variant="ghost"
+                                                                className="h-6 w-6"
+                                                                onClick={() => handleEditProduct(product)}
+                                                            >
+                                                                <Pencil className="h-3 w-3 text-slate-400 hover:text-primary" />
+                                                            </Button>
+                                                        </div>
                                                     </div>
                                                 </SortableItem>
                                             ))}
@@ -419,6 +453,15 @@ export default function MenuManagement() {
                     <Button size="sm" onClick={handleSaveOrder} className="font-black text-[10px] uppercase h-8">Salvar Agora</Button>
                 </div>
             )}
+
+            <ProductFormDialog
+                open={isProductDialogOpen}
+                onOpenChange={setIsProductDialogOpen}
+                product={editingProduct}
+                categories={categories}
+                onSubmit={handleProductSubmit}
+                isLoading={updateProduct.isPending}
+            />
         </div>
     );
 }
