@@ -372,16 +372,18 @@ export function GuestIdentification({ guestInfo, setGuestInfo, onIdentify, pousa
                                     </div>
                                 )}
 
-                                <div className="space-y-2">
-                                    <Label className="text-sm font-bold text-gray-700">{t.guest.room_label}</Label>
-                                    <Input
-                                        placeholder={t.guest.room_placeholder}
-                                        value={guestInfo.room}
-                                        onChange={(e) => setGuestInfo({ ...guestInfo, room: e.target.value })}
-                                        required
-                                        className={`h-12 bg-gray-50 border-gray-200 ${theme.ring}`}
-                                    />
-                                </div>
+                                {(!currentPousada || currentPousada.ask_room !== false) && (
+                                    <div className="space-y-2">
+                                        <Label className="text-sm font-bold text-gray-700">{t.guest.room_label}</Label>
+                                        <Input
+                                            placeholder={t.guest.room_placeholder}
+                                            value={guestInfo.room}
+                                            onChange={(e) => setGuestInfo({ ...guestInfo, room: e.target.value })}
+                                            required={(currentPousada?.ask_room !== false)}
+                                            className={`h-12 bg-gray-50 border-gray-200 ${theme.ring}`}
+                                        />
+                                    </div>
+                                )}
                             </>
                         )}
 

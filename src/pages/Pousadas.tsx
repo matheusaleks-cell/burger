@@ -155,6 +155,7 @@ export default function Pousadas() {
       fee_per_km: pousada.fee_per_km?.toString() || "1.50",
       is_hq: pousada.is_hq || false,
       slug: pousada.slug || "",
+      ask_room: pousada.ask_room !== false, // If undefined, treat as true
       hidden_categories: pousada.hidden_categories || []
     });
     setIsDialogOpen(true);

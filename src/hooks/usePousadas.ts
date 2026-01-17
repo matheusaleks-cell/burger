@@ -27,6 +27,7 @@ export interface Pousada {
     first_order_discount_value?: number;
     hidden_categories?: string[];
     slug?: string;
+    ask_room?: boolean;
 }
 
 export type PousadaInput = Omit<Pousada, "id">;
