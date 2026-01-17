@@ -8,7 +8,10 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useProducts, Product } from "@/hooks/useProducts";
-import { CartItem } from "@/contexts/CartContext";
+import { CartItem, useCart } from "@/contexts/CartContext";
+import { Minus, Plus, ArrowRight, Truck, CreditCard, QrCode, Banknote, AlertCircle, Check } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 function UpsellSection({ cart, addToCart }: { cart: CartItem[], addToCart: any }) {
     const { products } = useProducts();
