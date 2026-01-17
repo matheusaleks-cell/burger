@@ -80,7 +80,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 .map((item) => {
                     if (item.id === itemId) {
                         const newQty = item.quantity + delta;
-                        return newQty > 0 ? { ...item, quantity: newQty } : item;
+                        return { ...item, quantity: newQty };
                     }
                     return item;
                 })
