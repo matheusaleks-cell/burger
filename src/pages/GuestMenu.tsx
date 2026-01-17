@@ -323,7 +323,7 @@ export default function GuestMenu() {
       const { data: orderData, error: orderError } = await supabase.rpc('create_order_secure', {
         p_customer_name: guestInfo.name,
         p_customer_phone: guestInfo.phone,
-        p_room_number: guestInfo.room,
+        p_room_number: guestInfo.room || (finalOrderType === 'room' ? 'Balcão / Não informado' : 'Entrega'),
         p_order_type: finalOrderType,
         p_pousada_id: targetPousadaId,
         p_payment_method: orderNotes, // passing notes/payment info here
