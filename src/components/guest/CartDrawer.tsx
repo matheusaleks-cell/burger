@@ -7,19 +7,67 @@ import {
     DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useCart } from "@/contexts/CartContext";
-import { Minus, Plus, ArrowRight, Truck, CreditCard, QrCode, Banknote, AlertCircle, Check } from "lucide-react";
-import { useState, useEffect } from "react";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { useProducts, Product } from "@/hooks/useProducts";
+import { CartItem } from "@/contexts/CartContext";
 
-interface CartDrawerProps {
-    isOpen: boolean;
-    onClose: () => void;
-    guestName: string;
-    onSubmitOrder: (paymentDetails?: string) => void;
-    isSubmitting: boolean;
-    deliveryFee: number;
-    pousadaName?: string;
+function UpsellSection({ cart, addToCart }: { cart: CartItem[], addToCart: any }) {
+    const { products } = useProducts();
+
+    // Logic to find missing categories
+    const hasDrink = cart.some(item => item.product.categories?.name?.toLowerCase().includes("bebida") || item.product.categories?.name?.toLowerCase().includes("suco") || item.product.categories?.name?.toLowerCase().includes("refrigerante"));
+    const hasDessert = cart.some(item => item.product.categories?.name?.toLowerCase().includes("sobremesa") || item.product.categories?.name?.toLowerCase().includes("doce"));
+
+    let targetCategory = "";
+    if (!hasDrink) targetCategory = "bebida";
+    else if (!hasDessert) targetCategory = "sobremesa";
+
+    // If we have both or neither (empty cart), maybe show "Porções" or just high rated items?
+    // If cart is empty, we don't usually show upsell in drawer, but the drawer might be empty.
+    if (cart.length === 0) return null;
+    if (!targetCategory) return null; // Have everything
+
+    const suggestions = products
+        .filter(p => p.is_active && p.is_available && p.categories?.name?.toLowerCase().includes(targetCategory))
+        .slice(0, 5); // Take top 5
+
+    if (suggestions.length === 0) return null;
+
+    return (
+        <section className="space-y-3 pt-2 animate-in slide-in-from-right-4 fade-in duration-500">
+            <div className="flex items-center gap-2">
+                <span className="text-xs font-black uppercase tracking-widest text-primary ml-1">
+                    {targetCategory === 'bebida' ? 'Que tal uma bebida?' : 'Experimente uma sobremesa!'}
+                </span>
+                <div className="h-[1px] bg-primary/20 flex-1" />
+            </div>
+
+            <div className="flex gap-3 overflow-x-auto pb-4 px-1 scrollbar-hide -mx-2 px-2">
+                {suggestions.map(product => (
+                    <div key={product.id} className="min-w-[140px] w-[140px] bg-white rounded-2xl p-3 border border-gray-100 shadow-sm flex flex-col gap-2 relative group hover:border-primary/30 transition-all">
+                        <div className="h-20 w-full bg-gray-50 rounded-xl overflow-hidden relative">
+                            {product.image_url ? (
+                                <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">Sem foto</div>
+                            )}
+                            <button
+                                onClick={() => addToCart(product, 1, [], "")}
+                                className="absolute bottom-1 right-1 h-7 w-7 bg-primary text-white rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform"
+                            >
+                                <Plus className="h-4 w-4" />
+                            </button>
+                        </div>
+                        <div>
+                            <p className="font-bold text-xs text-gray-800 line-clamp-2 leading-tight">{product.name}</p>
+                            <p className="text-xs font-medium text-green-600 mt-1">
+                                {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(product.price)}
+                            </p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </section>
+    );
 }
 
 export function CartDrawer({
@@ -32,7 +80,7 @@ export function CartDrawer({
     pousadaName
 }: CartDrawerProps) {
     const { t } = useLanguage();
-    const { cart, updateQuantity, cartTotal } = useCart();
+    const { cart, updateQuantity, cartTotal, addToCart } = useCart();
     const [step, setStep] = useState<"referral" | "payment">("referral");
     const [paymentMethod, setPaymentMethod] = useState<"pix" | "card" | "cash">("pix");
     const [changeFor, setChangeFor] = useState("");
@@ -136,153 +184,158 @@ export function CartDrawer({
                                 ))}
                             </section>
 
-                            <section className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 space-y-4">
-                                <div className="flex items-center justify-between text-gray-500">
-                                    <span className="font-medium">Subtotal</span>
-                                    <span>{formatCurrency(cartTotal)}</span>
-                                </div>
+                        </section>
 
-                                <div className="flex items-center justify-between text-gray-500">
-                                    <span className="font-medium flex items-center gap-2">
-                                        <Truck className="w-4 h-4" />
-                                        Entrega {pousadaName && `(${pousadaName})`}
-                                    </span>
-                                    <span className="text-gray-800 font-medium">
-                                        {deliveryFee > 0 ? formatCurrency(deliveryFee) : <span className="text-green-600 font-bold">Grátis</span>}
-                                    </span>
-                                </div>
+                    {/* UPSELL SECTION */}
+                    <UpsellSection cart={cart} addToCart={addToCart} />
 
-                                <div className="h-[1px] bg-gray-100" />
-                                <div className="flex items-center justify-between">
-                                    <span className="text-lg font-black text-gray-800">{t.guest.cart.total}</span>
-                                    <span className="text-2xl font-black text-primary">{formatCurrency(finalTotal)}</span>
-                                </div>
-                            </section>
-                        </>
-                    ) : (
-                        <div className="space-y-6">
-                            <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 space-y-4">
-                                <h3 className="font-black text-gray-800 flex items-center gap-2">
-                                    <CreditCard className="w-5 h-5 text-primary" /> Forma de Pagamento
-                                </h3>
-                                <div className="grid grid-cols-1 gap-3">
-                                    <button
-                                        onClick={() => setPaymentMethod('pix')}
-                                        className={`p-4 rounded-xl border-2 text-left transition-all flex items-center justify-between ${paymentMethod === 'pix' ? 'border-primary bg-primary/5' : 'border-gray-100'}`}
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center">
-                                                <QrCode className="w-5 h-5" />
-                                            </div>
-                                            <span className="font-bold text-gray-700">PIX</span>
-                                        </div>
-                                        {paymentMethod === 'pix' && <div className="w-4 h-4 rounded-full bg-primary" />}
-                                    </button>
-
-                                    <button
-                                        onClick={() => setPaymentMethod('card')}
-                                        className={`p-4 rounded-xl border-2 text-left transition-all flex items-center justify-between ${paymentMethod === 'card' ? 'border-primary bg-primary/5' : 'border-gray-100'}`}
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
-                                                <CreditCard className="w-5 h-5" />
-                                            </div>
-                                            <span className="font-bold text-gray-700">Cartão (Maquininha)</span>
-                                        </div>
-                                        {paymentMethod === 'card' && <div className="w-4 h-4 rounded-full bg-primary" />}
-                                    </button>
-
-                                    <button
-                                        onClick={() => setPaymentMethod('cash')}
-                                        className={`p-4 rounded-xl border-2 text-left transition-all flex flex-col ${paymentMethod === 'cash' ? 'border-primary bg-primary/5' : 'border-gray-100'}`}
-                                    >
-                                        <div className="flex items-center justify-between w-full">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
-                                                    <Banknote className="w-5 h-5" />
-                                                </div>
-                                                <span className="font-bold text-gray-700">Dinheiro</span>
-                                            </div>
-                                            {paymentMethod === 'cash' && <div className="w-4 h-4 rounded-full bg-primary" />}
-                                        </div>
-
-                                        {paymentMethod === 'cash' && (
-                                            <div className="mt-4 pl-12 animate-in fade-in slide-in-from-top-2">
-                                                <label className="text-xs font-bold text-gray-500 uppercase">Troco para quanto?</label>
-                                                <div className="relative mt-1">
-                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-bold">R$</span>
-                                                    <input
-                                                        type="number"
-                                                        placeholder="Ex: 50,00"
-                                                        value={changeFor}
-                                                        onChange={(e) => setChangeFor(e.target.value)}
-                                                        className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl font-bold text-gray-900 focus:ring-2 focus:ring-primary/20 outline-none"
-                                                    />
-                                                </div>
-                                            </div>
-                                        )}
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="bg-gray-900 text-white p-6 rounded-3xl shadow-xl">
-                                <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-4">
-                                    <span className="text-gray-400 font-medium">Total a Pagar</span>
-                                    <span className="text-3xl font-black">{formatCurrency(finalTotal)}</span>
-                                </div>
-                                <div className="flex items-start gap-3 text-sm text-gray-400">
-                                    <AlertCircle className="w-5 h-5 shrink-0 text-yellow-400" />
-                                    <p>Verifique o pedido antes de finalizar. O pagamento será feito na entrega.</p>
-                                </div>
-                            </div>
+                    <section className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 space-y-4">
+                        <div className="flex items-center justify-between text-gray-500">
+                            <span className="font-medium">Subtotal</span>
+                            <span>{formatCurrency(cartTotal)}</span>
                         </div>
-                    )}
-                </div>
 
-                <DialogFooter className="p-6 bg-white border-t border-gray-100 flex-col sm:flex-row gap-3">
-                    {step === "referral" ? (
-                        <>
-                            <Button
-                                variant="ghost"
-                                className="flex-1 h-14 font-bold text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-2xl"
-                                onClick={onClose}
-                                disabled={isSubmitting}
+                        <div className="flex items-center justify-between text-gray-500">
+                            <span className="font-medium flex items-center gap-2">
+                                <Truck className="w-4 h-4" />
+                                Entrega {pousadaName && `(${pousadaName})`}
+                            </span>
+                            <span className="text-gray-800 font-medium">
+                                {deliveryFee > 0 ? formatCurrency(deliveryFee) : <span className="text-green-600 font-bold">Grátis</span>}
+                            </span>
+                        </div>
+
+                        <div className="h-[1px] bg-gray-100" />
+                        <div className="flex items-center justify-between">
+                            <span className="text-lg font-black text-gray-800">{t.guest.cart.total}</span>
+                            <span className="text-2xl font-black text-primary">{formatCurrency(finalTotal)}</span>
+                        </div>
+                    </section>
+                </>
+                ) : (
+                <div className="space-y-6">
+                    <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 space-y-4">
+                        <h3 className="font-black text-gray-800 flex items-center gap-2">
+                            <CreditCard className="w-5 h-5 text-primary" /> Forma de Pagamento
+                        </h3>
+                        <div className="grid grid-cols-1 gap-3">
+                            <button
+                                onClick={() => setPaymentMethod('pix')}
+                                className={`p-4 rounded-xl border-2 text-left transition-all flex items-center justify-between ${paymentMethod === 'pix' ? 'border-primary bg-primary/5' : 'border-gray-100'}`}
                             >
-                                {t.guest.product.add}
-                            </Button>
-                            <Button
-                                className="flex-[2] h-14 text-lg font-black bg-primary hover:bg-primary/90 text-white rounded-2xl shadow-xl shadow-primary/20"
-                                onClick={handleNextStep}
-                                disabled={isSubmitting || cart.length === 0}
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center">
+                                        <QrCode className="w-5 h-5" />
+                                    </div>
+                                    <span className="font-bold text-gray-700">PIX</span>
+                                </div>
+                                {paymentMethod === 'pix' && <div className="w-4 h-4 rounded-full bg-primary" />}
+                            </button>
+
+                            <button
+                                onClick={() => setPaymentMethod('card')}
+                                className={`p-4 rounded-xl border-2 text-left transition-all flex items-center justify-between ${paymentMethod === 'card' ? 'border-primary bg-primary/5' : 'border-gray-100'}`}
                             >
-                                {t.guest.cart.checkout} <ArrowRight className="ml-2 h-5 w-5" />
-                            </Button>
-                        </>
-                    ) : (
-                        <>
-                            <Button
-                                variant="ghost"
-                                className="flex-1 h-14 font-bold text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-2xl"
-                                onClick={() => setStep("referral")}
-                                disabled={isSubmitting}
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+                                        <CreditCard className="w-5 h-5" />
+                                    </div>
+                                    <span className="font-bold text-gray-700">Cartão (Maquininha)</span>
+                                </div>
+                                {paymentMethod === 'card' && <div className="w-4 h-4 rounded-full bg-primary" />}
+                            </button>
+
+                            <button
+                                onClick={() => setPaymentMethod('cash')}
+                                className={`p-4 rounded-xl border-2 text-left transition-all flex flex-col ${paymentMethod === 'cash' ? 'border-primary bg-primary/5' : 'border-gray-100'}`}
                             >
-                                {t.guest.back}
-                            </Button>
-                            <Button
-                                className="flex-[2] h-14 text-lg font-black bg-green-600 hover:bg-green-700 text-white rounded-2xl shadow-xl shadow-green-600/20"
-                                onClick={handleFinalSubmit}
-                                disabled={isSubmitting}
-                            >
-                                {isSubmitting ? (
-                                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white" />
-                                ) : (
-                                    <span className="flex items-center gap-2">Confirmar <Check className="h-5 w-5" /></span>
+                                <div className="flex items-center justify-between w-full">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
+                                            <Banknote className="w-5 h-5" />
+                                        </div>
+                                        <span className="font-bold text-gray-700">Dinheiro</span>
+                                    </div>
+                                    {paymentMethod === 'cash' && <div className="w-4 h-4 rounded-full bg-primary" />}
+                                </div>
+
+                                {paymentMethod === 'cash' && (
+                                    <div className="mt-4 pl-12 animate-in fade-in slide-in-from-top-2">
+                                        <label className="text-xs font-bold text-gray-500 uppercase">Troco para quanto?</label>
+                                        <div className="relative mt-1">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-bold">R$</span>
+                                            <input
+                                                type="number"
+                                                placeholder="Ex: 50,00"
+                                                value={changeFor}
+                                                onChange={(e) => setChangeFor(e.target.value)}
+                                                className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl font-bold text-gray-900 focus:ring-2 focus:ring-primary/20 outline-none"
+                                            />
+                                        </div>
+                                    </div>
                                 )}
-                            </Button>
-                        </>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="bg-gray-900 text-white p-6 rounded-3xl shadow-xl">
+                        <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-4">
+                            <span className="text-gray-400 font-medium">Total a Pagar</span>
+                            <span className="text-3xl font-black">{formatCurrency(finalTotal)}</span>
+                        </div>
+                        <div className="flex items-start gap-3 text-sm text-gray-400">
+                            <AlertCircle className="w-5 h-5 shrink-0 text-yellow-400" />
+                            <p>Verifique o pedido antes de finalizar. O pagamento será feito na entrega.</p>
+                        </div>
+                    </div>
+                </div>
                     )}
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+            </div>
+
+            <DialogFooter className="p-6 bg-white border-t border-gray-100 flex-col sm:flex-row gap-3">
+                {step === "referral" ? (
+                    <>
+                        <Button
+                            variant="ghost"
+                            className="flex-1 h-14 font-bold text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-2xl"
+                            onClick={onClose}
+                            disabled={isSubmitting}
+                        >
+                            {t.guest.product.add}
+                        </Button>
+                        <Button
+                            className="flex-[2] h-14 text-lg font-black bg-primary hover:bg-primary/90 text-white rounded-2xl shadow-xl shadow-primary/20"
+                            onClick={handleNextStep}
+                            disabled={isSubmitting || cart.length === 0}
+                        >
+                            {t.guest.cart.checkout} <ArrowRight className="ml-2 h-5 w-5" />
+                        </Button>
+                    </>
+                ) : (
+                    <>
+                        <Button
+                            variant="ghost"
+                            className="flex-1 h-14 font-bold text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-2xl"
+                            onClick={() => setStep("referral")}
+                            disabled={isSubmitting}
+                        >
+                            {t.guest.back}
+                        </Button>
+                        <Button
+                            className="flex-[2] h-14 text-lg font-black bg-green-600 hover:bg-green-700 text-white rounded-2xl shadow-xl shadow-green-600/20"
+                            onClick={handleFinalSubmit}
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? (
+                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white" />
+                            ) : (
+                                <span className="flex items-center gap-2">Confirmar <Check className="h-5 w-5" /></span>
+                            )}
+                        </Button>
+                    </>
+                )}
+            </DialogFooter>
+        </DialogContent>
+        </Dialog >
     );
 }

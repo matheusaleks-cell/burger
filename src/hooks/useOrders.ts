@@ -11,6 +11,7 @@ export interface OrderItem {
     quantity: number;
     unit_price: number;
     notes: string | null;
+    product?: any; // Ideally typed as Product but using any for quick fix avoids circular deps
 }
 
 export interface Order {
