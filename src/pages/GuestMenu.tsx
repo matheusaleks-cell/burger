@@ -389,7 +389,7 @@ export default function GuestMenu() {
 
     } catch (error) {
       console.error("Error creating order:", error);
-      toast.error("Erro ao enviar pedido. Tente novamente.");
+      toast.error("Erro ao enviar pedido: " + (error as Error).message);
     } finally {
       setIsSubmitting(false);
     }
