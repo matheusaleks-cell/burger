@@ -5,12 +5,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetFooter,
+} from "@/components/ui/sheet";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -26,9 +33,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Users, Search, Phone, MapPin, Home } from "lucide-react";
+import { Plus, Pencil, Trash2, Users, Search, Phone, MapPin, Home, History, FileText, UserCog, Ban, CheckCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface Customer {
   id: string;
@@ -38,27 +49,45 @@ interface Customer {
   room_number: string | null;
   address: string | null;
   created_at: string;
+  internal_notes?: string;
+  is_blocked?: boolean;
+}
+
+interface OrderHistoryItem {
+  id: string;
+  order_number: number;
+  total: number;
+  status: string;
+  created_at: string;
+  order_items: { product_name: string; quantity: number }[];
 }
 
 interface CustomerWithStats extends Customer {
-  orders?: { id: string; total: number; created_at: string }[];
+  orders?: OrderHistoryItem[];
   totalOrders?: number;
   totalSpent?: number;
   lastOrderDate?: string;
+  favoriteItem?: string;
 }
 
 export default function Customers() {
   const [customers, setCustomers] = useState<CustomerWithStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+
+  // Sheet State
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState<CustomerWithStats | null>(null);
+
+  // Form State
   const [formData, setFormData] = useState({
     full_name: "",
     phone: "",
     order_type: "counter" as "delivery" | "counter" | "room",
     room_number: "",
     address: "",
+    internal_notes: "",
+    is_blocked: false
   });
 
   useEffect(() => {
@@ -72,7 +101,9 @@ export default function Customers() {
         *,
         orders (
           id,
+          order_number,
           total,
+          status,
           created_at,
           order_items (
             product_name,
@@ -84,7 +115,7 @@ export default function Customers() {
 
     if (error) {
       console.error("Error fetching customers:", error);
-      toast.error("Erro ao carregar clientes");
+      toast.error("Erro ao carregar clientes: " + error.message);
       setLoading(false);
       return;
     }
@@ -93,7 +124,6 @@ export default function Customers() {
       const enriched = data.map((c: any) => {
         const orders = c.orders || [];
         const totalSpent = orders.reduce((acc: number, o: any) => acc + (o.total || 0), 0);
-
         const lastOrder = orders.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
 
         // Calculate Favorite Item
@@ -117,6 +147,7 @@ export default function Customers() {
 
         return {
           ...c,
+          orders: orders.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
           totalOrders: orders.length,
           totalSpent: totalSpent,
           lastOrderDate: lastOrder ? lastOrder.created_at : null,
@@ -138,6 +169,8 @@ export default function Customers() {
       order_type: formData.order_type,
       room_number: formData.order_type === "room" ? formData.room_number : null,
       address: formData.order_type === "delivery" ? formData.address : null,
+      internal_notes: formData.internal_notes,
+      is_blocked: formData.is_blocked
     };
 
     if (editingCustomer) {
@@ -147,7 +180,7 @@ export default function Customers() {
         .eq("id", editingCustomer.id);
 
       if (error) {
-        toast.error("Erro ao atualizar cliente");
+        toast.error("Erro ao atualizar cliente: " + error.message);
         return;
       }
       toast.success("Cliente atualizado!");
@@ -155,18 +188,18 @@ export default function Customers() {
       const { error } = await supabase.from("customers").insert(customerData);
 
       if (error) {
-        toast.error("Erro ao criar cliente");
+        toast.error("Erro ao criar cliente: " + error.message);
         return;
       }
       toast.success("Cliente criado!");
     }
 
-    setIsDialogOpen(false);
+    setIsSheetOpen(false);
     resetForm();
     fetchCustomers();
   };
 
-  const handleEdit = (customer: Customer) => {
+  const handleEdit = (customer: CustomerWithStats) => {
     setEditingCustomer(customer);
     setFormData({
       full_name: customer.full_name,
@@ -174,12 +207,14 @@ export default function Customers() {
       order_type: customer.order_type,
       room_number: customer.room_number || "",
       address: customer.address || "",
+      internal_notes: customer.internal_notes || "",
+      is_blocked: customer.is_blocked || false
     });
-    setIsDialogOpen(true);
+    setIsSheetOpen(true);
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Tem certeza que deseja excluir este cliente?")) return;
+    if (!confirm("Tem certeza que deseja excluir este cliente? O histórico de pedidos será mantido, mas desvinculado.")) return;
 
     const { error } = await supabase.from("customers").delete().eq("id", id);
 
@@ -200,6 +235,8 @@ export default function Customers() {
       order_type: "counter",
       room_number: "",
       address: "",
+      internal_notes: "",
+      is_blocked: false
     });
   };
 
@@ -237,108 +274,238 @@ export default function Customers() {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in pb-12">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-display font-bold">Clientes</h1>
-          <p className="text-muted-foreground">Gerencie seus clientes e visualize estatísticas.</p>
+          <h1 className="text-3xl font-display font-bold">Gestão de Clientes (CRM)</h1>
+          <p className="text-muted-foreground">Gerencie perfis, histórico e anotações.</p>
         </div>
 
-        <Dialog open={isDialogOpen} onOpenChange={(open) => {
-          setIsDialogOpen(open);
+        <Sheet open={isSheetOpen} onOpenChange={(open) => {
+          setIsSheetOpen(open);
           if (!open) resetForm();
         }}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Novo Cliente
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>
-                {editingCustomer ? "Editar Cliente" : "Novo Cliente"}
-              </DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="full_name">Nome Completo</Label>
-                <Input
-                  id="full_name"
-                  value={formData.full_name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, full_name: e.target.value })
-                  }
-                  required
-                />
-              </div>
+          <Button onClick={() => { resetForm(); setIsSheetOpen(true); }} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Novo ClienteManual
+          </Button>
 
-              <div className="space-y-2">
-                <Label htmlFor="phone">Telefone</Label>
-                <Input
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
-                  }
-                  placeholder="(00) 00000-0000"
-                  required
-                />
-              </div>
+          <SheetContent className="sm:max-w-2xl w-full overflow-y-auto">
+            <SheetHeader className="mb-6">
+              <SheetTitle className="text-2xl font-bold flex items-center gap-2">
+                {editingCustomer ? <UserCog className="h-6 w-6 text-primary" /> : <Plus className="h-6 w-6 text-primary" />}
+                {editingCustomer ? "Detalhes do Cliente" : "Novo Cliente"}
+              </SheetTitle>
+              <SheetDescription>
+                Visualize o histórico, adicione notas ou bloqueie o acesso.
+              </SheetDescription>
+            </SheetHeader>
 
-              <div className="space-y-2">
-                <Label htmlFor="order_type">Tipo de Pedido</Label>
-                <Select
-                  value={formData.order_type}
-                  onValueChange={(value: "delivery" | "counter" | "room") =>
-                    setFormData({ ...formData, order_type: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="counter">Balcão</SelectItem>
-                    <SelectItem value="delivery">Delivery</SelectItem>
-                    <SelectItem value="room">Quarto</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <Tabs defaultValue="profile" className="w-full">
+              <TabsList className="grid w-full grid-cols-3 mb-6 p-1 bg-gray-100 rounded-xl">
+                <TabsTrigger value="profile" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                  <UserCog className="h-4 w-4 mr-2" /> Perfil
+                </TabsTrigger>
+                <TabsTrigger value="notes" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                  <FileText className="h-4 w-4 mr-2" /> Notas
+                </TabsTrigger>
+                <TabsTrigger value="history" disabled={!editingCustomer} className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                  <History className="h-4 w-4 mr-2" /> Histórico
+                </TabsTrigger>
+              </TabsList>
 
-              {formData.order_type === "room" && (
-                <div className="space-y-2">
-                  <Label htmlFor="room_number">Número do Quarto</Label>
-                  <Input
-                    id="room_number"
-                    value={formData.room_number}
-                    onChange={(e) =>
-                      setFormData({ ...formData, room_number: e.target.value })
-                    }
-                    required
-                  />
+              {/* PROFILE TAB */}
+              <TabsContent value="profile">
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  <Card className="border-gray-100 shadow-sm">
+                    <CardContent className="pt-6 space-y-4">
+
+                      {/* Block Toggle */}
+                      <div className={`flex items-center justify-between p-4 rounded-xl border ${formData.is_blocked ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`}>
+                        <div className="flex items-center gap-3">
+                          {formData.is_blocked ? <Ban className="h-6 w-6 text-red-600" /> : <CheckCircle className="h-6 w-6 text-green-600" />}
+                          <div>
+                            <h4 className={`font-bold ${formData.is_blocked ? 'text-red-900' : 'text-green-900'}`}>
+                              {formData.is_blocked ? 'Cliente Bloqueado' : 'Cliente Ativo'}
+                            </h4>
+                            <p className={`text-xs ${formData.is_blocked ? 'text-red-700' : 'text-green-700'}`}>
+                              {formData.is_blocked ? 'Este cliente não poderá realizar novos pedidos.' : 'Este cliente pode pedir normalmente.'}
+                            </p>
+                          </div>
+                        </div>
+                        <Switch
+                          checked={formData.is_blocked}
+                          onCheckedChange={(checked) => setFormData({ ...formData, is_blocked: checked })}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="full_name">Nome Completo</Label>
+                          <Input
+                            id="full_name"
+                            value={formData.full_name}
+                            onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                            required
+                            className="bg-gray-50/50"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="phone">Telefone (WhatsApp)</Label>
+                          <Input
+                            id="phone"
+                            value={formData.phone}
+                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                            placeholder="(00) 00000-0000"
+                            required
+                            className="bg-gray-50/50"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="order_type">Modo Preferido (Último)</Label>
+                        <Select
+                          value={formData.order_type}
+                          onValueChange={(value: "delivery" | "counter" | "room") =>
+                            setFormData({ ...formData, order_type: value })
+                          }
+                        >
+                          <SelectTrigger className="bg-gray-50/50">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="counter">Balcão (Retirada)</SelectItem>
+                            <SelectItem value="delivery">Delivery</SelectItem>
+                            <SelectItem value="room">Consumo Local / Quarto</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {formData.order_type === "room" && (
+                        <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
+                          <Label htmlFor="room_number">Número do Quarto / Mesa</Label>
+                          <Input
+                            id="room_number"
+                            value={formData.room_number || ''}
+                            onChange={(e) => setFormData({ ...formData, room_number: e.target.value })}
+                            required
+                          />
+                        </div>
+                      )}
+
+                      {formData.order_type === "delivery" && (
+                        <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
+                          <Label htmlFor="address">Endereço de Entrega</Label>
+                          <Textarea
+                            id="address"
+                            value={formData.address || ''}
+                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                            required
+                            rows={3}
+                          />
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  <div className="flex gap-3">
+                    <Button type="submit" className="flex-1 h-12 text-base font-bold">
+                      {editingCustomer ? "Salvar Alterações" : "Criar Cliente"}
+                    </Button>
+                    <Button type="button" variant="outline" onClick={() => setIsSheetOpen(false)} className="h-12 border-gray-200">
+                      Cancelar
+                    </Button>
+                  </div>
+                </form>
+              </TabsContent>
+
+              {/* NOTES TAB */}
+              <TabsContent value="notes">
+                <Card className="border-gray-100 shadow-sm h-[400px] flex flex-col">
+                  <CardContent className="pt-6 flex-1 flex flex-col gap-4">
+                    <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-xl text-yellow-800 text-sm">
+                      <div className="flex items-center gap-2 font-bold mb-1">
+                        <FileText className="h-4 w-4" />
+                        Atenção
+                      </div>
+                      Estas anotações são **internas**. O cliente nunca terá acesso a elas. Use para registrar preferências, incidentes ou dicas de atendimento.
+                    </div>
+
+                    <div className="flex-1">
+                      <Label className="mb-2 block">Anotações Internas</Label>
+                      <Textarea
+                        value={formData.internal_notes}
+                        onChange={(e) => setFormData({ ...formData, internal_notes: e.target.value })}
+                        placeholder="Ex: Cliente prefere coca-cola sem gelo; Não gosta de cebola; Já reclamou da entrega..."
+                        className="h-full resize-none bg-yellow-50/30 border-yellow-200 focus:border-yellow-400 focus:ring-yellow-200"
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+                <Button onClick={handleSubmit} className="w-full mt-4 h-12 bg-yellow-500 hover:bg-yellow-600 text-white font-bold">
+                  Salvar Notas
+                </Button>
+              </TabsContent>
+
+              {/* HISTORY TAB */}
+              <TabsContent value="history">
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-primary/5 p-4 rounded-xl border border-primary/10">
+                      <span className="text-xs text-muted-foreground uppercase font-bold">Total Gasto (LTV)</span>
+                      <div className="text-2xl font-black text-primary">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(editingCustomer?.totalSpent || 0)}
+                      </div>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                      <span className="text-xs text-muted-foreground uppercase font-bold">Total Pedidos</span>
+                      <div className="text-2xl font-black text-gray-700">
+                        {editingCustomer?.totalOrders || 0}
+                      </div>
+                    </div>
+                  </div>
+
+                  <h4 className="font-bold text-gray-800 text-sm uppercase tracking-wider mt-4">Últimos Pedidos</h4>
+                  <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                    {editingCustomer?.orders?.map((order) => (
+                      <div key={order.id} className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:border-primary/20 transition-colors">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <Badge variant="outline" className="mb-1">#{order.order_number}</Badge>
+                            <p className="text-xs text-gray-400 font-medium">
+                              {format(new Date(order.created_at), "dd 'de' MMM, HH:mm", { locale: ptBR })}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-bold text-gray-800">
+                              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.total)}
+                            </div>
+                            <span className={`text-[10px] uppercase font-bold ${order.status === 'completed' ? 'text-green-600' :
+                                order.status === 'cancelled' ? 'text-red-600' : 'text-blue-600'
+                              }`}>
+                              {order.status}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="text-xs text-gray-500 border-t border-gray-50 pt-2">
+                          {order.order_items.map((item, idx) => (
+                            <span key={idx}>{item.quantity}x {item.product_name}{idx < order.order_items.length - 1 ? ', ' : ''}</span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                    {(!editingCustomer?.orders || editingCustomer.orders.length === 0) && (
+                      <p className="text-center text-gray-400 py-8 italic">Nenhum pedido registrado.</p>
+                    )}
+                  </div>
                 </div>
-              )}
+              </TabsContent>
 
-              {formData.order_type === "delivery" && (
-                <div className="space-y-2">
-                  <Label htmlFor="address">Endereço</Label>
-                  <Input
-                    id="address"
-                    value={formData.address}
-                    onChange={(e) =>
-                      setFormData({ ...formData, address: e.target.value })
-                    }
-                    required
-                  />
-                </div>
-              )}
-
-              <Button type="submit" className="w-full">
-                {editingCustomer ? "Salvar Alterações" : "Criar Cliente"}
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+            </Tabs>
+          </SheetContent>
+        </Sheet>
       </div>
 
       {/* Search */}
@@ -348,88 +515,94 @@ export default function Customers() {
           placeholder="Buscar por nome, telefone ou quarto..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10"
+          className="pl-10 shadow-sm"
         />
       </div>
 
       {/* Customers Table */}
-      <Card className="glass-card">
+      <Card className="border-none shadow-sm bg-white/50 backdrop-blur-sm">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className="hover:bg-transparent">
                 <TableHead>Cliente</TableHead>
-                <TableHead>Telefone</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Estatísticas</TableHead>
+                <TableHead>Contato</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Histórico</TableHead>
                 <TableHead>Favorito</TableHead>
-                <TableHead>Detalhes</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredCustomers.map((customer) => (
-                <TableRow key={customer.id}>
+                <TableRow key={customer.id} className="hover:bg-gray-50/50 cursor-pointer" onClick={() => handleEdit(customer)}>
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
-                        {customer.full_name?.charAt(0).toUpperCase()}
+                      <div className={`flex h-10 w-10 items-center justify-center rounded-full font-bold transition-all ${customer.is_blocked ? 'bg-red-100 text-red-600 ring-2 ring-red-200' : 'bg-primary/10 text-primary'
+                        }`}>
+                        {customer.is_blocked ? <Ban className="h-5 w-5" /> : customer.full_name?.charAt(0).toUpperCase()}
                       </div>
-                      <span className="font-medium">{customer.full_name}</span>
+                      <div>
+                        <span className={`font-medium ${customer.is_blocked ? 'text-red-900 line-through decoration-red-300' : ''}`}>
+                          {customer.full_name}
+                        </span>
+                        {customer.order_type === "room" && customer.room_number && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Home className="h-3 w-3" /> {customer.room_number}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Phone className="h-4 w-4" />
-                      {customer.phone}
+                    <div className="flex flex-col text-sm">
+                      <span className="flex items-center gap-1.5 text-gray-600">
+                        <Phone className="h-3 w-3" /> {customer.phone}
+                      </span>
+                      {customer.internal_notes && (
+                        <span className="flex items-center gap-1 text-[10px] text-yellow-600 bg-yellow-50 w-fit px-1.5 py-0.5 rounded-full mt-1">
+                          <FileText className="h-3 w-3" /> Possui anotações
+                        </span>
+                      )}
                     </div>
                   </TableCell>
-                  <TableCell>{getOrderTypeBadge(customer.order_type)}</TableCell>
+                  <TableCell>
+                    {customer.is_blocked ? (
+                      <Badge variant="destructive" className="uppercase text-[10px]">Bloqueado</Badge>
+                    ) : (
+                      getOrderTypeBadge(customer.order_type)
+                    )}
+                  </TableCell>
                   <TableCell>
                     <div className="flex flex-col gap-1 text-sm">
-                      <span className="font-bold text-gray-700">{customer.totalOrders} pedido(s)</span>
-                      <span className="text-emerald-600 font-medium">
-                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(customer.totalSpent || 0)}
+                      <span className="font-bold text-gray-700">{customer.totalOrders} pedidos</span>
+                      <span className="text-emerald-600 font-bold text-xs">
+                        LTV: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(customer.totalSpent || 0)}
                       </span>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <span className="text-sm font-medium text-gray-600 truncate max-w-[150px] block" title={(customer as any).favoriteItem}>
-                      {(customer as any).favoriteItem || "-"}
+                    <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full inline-block max-w-[120px] truncate" title={customer.favoriteItem}>
+                      {customer.favoriteItem || "-"}
                     </span>
                   </TableCell>
-                  <TableCell>
-                    {customer.order_type === "room" && customer.room_number && (
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Home className="h-4 w-4" />
-                        Quarto {customer.room_number}
-                      </div>
-                    )}
-                    {customer.order_type === "delivery" && customer.address && (
-                      <div className="flex items-center gap-2 text-muted-foreground max-w-xs truncate">
-                        <MapPin className="h-4 w-4 shrink-0" />
-                        {customer.address}
-                      </div>
-                    )}
-                    {customer.order_type === "counter" && (
-                      <span className="text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
+                    <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleEdit(customer)}
+                        className="h-8 w-8 hover:bg-gray-100"
+                        onClick={(e) => { e.stopPropagation(); handleEdit(customer); }}
                       >
-                        <Pencil className="h-4 w-4" />
+                        <Pencil className="h-4 w-4 text-gray-500" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleDelete(customer.id)}
+                        className="h-8 w-8 hover:bg-red-50"
+                        onClick={(e) => { e.stopPropagation(); handleDelete(customer.id); }}
                       >
-                        <Trash2 className="h-4 w-4 text-destructive" />
+                        <Trash2 className="h-4 w-4 text-red-400" />
                       </Button>
                     </div>
                   </TableCell>
@@ -440,7 +613,8 @@ export default function Customers() {
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-12">
                     <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">Nenhum cliente encontrado</p>
+                    <p className="text-muted-foreground font-medium">Nenhum cliente encontrado</p>
+                    <p className="text-sm text-gray-400">Tente buscar por outro termo</p>
                   </TableCell>
                 </TableRow>
               )}
