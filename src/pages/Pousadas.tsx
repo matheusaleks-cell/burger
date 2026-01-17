@@ -49,6 +49,7 @@ export default function Pousadas() {
     fee_per_km: "1.50",
     is_hq: false,
     slug: "",
+    ask_room: true,
     hidden_categories: [] as string[]
   });
 
@@ -107,6 +108,7 @@ export default function Pousadas() {
       fee_per_km: kmFee,
       is_hq: form.is_hq,
       slug: form.slug ? form.slug.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') : null,
+      ask_room: form.ask_room,
       hidden_categories: form.hidden_categories || []
     };
 
@@ -368,6 +370,17 @@ export default function Pousadas() {
                         placeholder="1.50"
                       />
                     </div>
+                    <div className="space-y-4 col-span-2 border p-4 rounded-md">
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="ask_room"
+                          checked={form.ask_room !== false}
+                          onCheckedChange={(checked) => setForm({ ...form, ask_room: checked })}
+                        />
+                        <Label htmlFor="ask_room">Pedir "Quarto/Mesa"? (Desmarque para parceiros que não precisam)</Label>
+                      </div>
+                    </div>
+
                     <div className="space-y-2 col-span-2">
                       <Label>Categorias Ocultas (Não exibir neste cardápio)</Label>
                       <ScrollArea className="h-[150px] w-full border rounded-md p-4">
