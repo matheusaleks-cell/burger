@@ -109,6 +109,13 @@ export function GuestIdentification({ guestInfo, setGuestInfo, onIdentify, pousa
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
+        // Strict Phone Validation (must be 11 digits: (XX) XXXXX-XXXX)
+        const rawPhone = guestInfo.phone.replace(/\D/g, "");
+        if (rawPhone.length < 11) {
+            alert("Por favor, digite um número de celular válido com DDD.");
+            return;
+        }
+
         // If locked to a partner, ensure we use that ID
         let targetPousadaId = selectedPousadaId;
         if (currentPousada && !currentPousada.is_hq) {

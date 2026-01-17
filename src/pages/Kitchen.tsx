@@ -3,12 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Bell, Clock, Volume2, VolumeX, BellDot } from "lucide-react";
-import { useOrders } from "@/hooks/useOrders";
+import { useActiveOrders } from "@/hooks/useOrders";
 import { useKitchenSound } from "@/hooks/useKitchenSound";
 import { KitchenOrderCard } from "@/components/kitchen/KitchenOrderCard";
 
 export default function Kitchen() {
-  const { orders: allOrders, isLoading, updateOrderStatus } = useOrders();
+  const { orders: allOrders, isLoading, updateOrderStatus } = useActiveOrders();
   const { soundEnabled, setSoundEnabled, playAlarm, stopAlarm, isPlaying } = useKitchenSound();
   const previousOrdersRef = useRef<string[]>([]);
 

@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-import { useOrders, Order } from "@/hooks/useOrders";
+import { useActiveOrders, usePaginatedOrders, Order } from "@/hooks/useOrders";
 import { OrderTable } from "@/components/orders/OrderTable";
 import { KanbanBoard } from "@/components/orders/KanbanBoard";
 import { CreateOrderDialog } from "@/components/orders/CreateOrderDialog";
@@ -22,7 +22,14 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useNotificationSound } from "@/hooks/useNotificationSound";
 
 export default function Orders() {
-  const { orders, isLoading } = useOrders();
+  // Two separate queries for different views
+  const { orders: activeOrders, isLoading: loadingActive, updateOrderStatus: updateActive } = useActiveOrders();
+
+  // Pagination State for List View
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
+  const { orders: historyOrders, isLoading: loadingHistory, updateOrderStatus: updateHistory, total, pageCount } = usePaginatedOrders({ page, pageSize });
+
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
@@ -30,75 +37,47 @@ export default function Orders() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const { playNewOrderSound, playOrderReadySound, stopNewOrderLoop } = useNotificationSound();
 
-  // Status Update Logic
-  const updateOrderStatus = async (orderId: string, status: Order["status"]) => {
-    const updateData: any = { status };
-
-    if (status === "preparing") {
-      updateData.started_at = new Date().toISOString();
-    } else if (status === "ready" || status === "delivered") {
-      updateData.completed_at = new Date().toISOString();
-    }
-
-    const { error } = await supabase
-      .from("orders")
-      .update(updateData)
-      .eq("id", orderId);
-
-    if (error) {
-      toast.error("Erro ao atualizar status");
-      return;
-    }
-
-    // Stop the new order loop when we acknowledge/update an order
-    stopNewOrderLoop();
-
-    toast.success("Status atualizado!");
-
-    // Play sound if order is ready and sound enabled
-    if (status === 'ready' && soundEnabled) {
-      playOrderReadySound();
-    }
-
-    queryClient.invalidateQueries({ queryKey: ["orders"] });
+  // Helper to unify update call
+  const handleStatusUpdate = (orderId: string, status: Order["status"]) => {
+    if (viewMode === 'kanban') updateActive.mutate({ orderId, status });
+    else updateHistory.mutate({ orderId, status });
   };
 
   const cancelOrder = async (orderId: string) => {
-    // Removed confirm to ensure it executes
-    // if (!confirm("Tem certeza que deseja cancelar este pedido?")) return;
     toast.info("Cancelando pedido...");
-    await updateOrderStatus(orderId, "cancelled");
+    handleStatusUpdate(orderId, "cancelled");
   };
 
   const deleteOrder = async (orderId: string) => {
+    // Delete logic remains same... but needs to access supabase directly or add delete mutation to hook
+    // For now assuming direct supabase call is fine in page
     toast.info("Apagando pedido...");
-
-    // Delete items first
     await supabase.from("order_items").delete().eq("order_id", orderId);
-
-    // Then delete order
     const { error } = await supabase.from("orders").delete().eq("id", orderId);
 
     if (error) {
-      console.error("Error deleting order:", error);
-      toast.error("Erro ao apagar pedido (Permissão?)");
-      return;
+      toast.error("Erro ao apagar");
+    } else {
+      toast.success("Apagado!");
+      queryClient.invalidateQueries({ queryKey: ["active_orders"] });
+      queryClient.invalidateQueries({ queryKey: ["paginated_orders"] });
     }
-
-    toast.success("Pedido apagado com sucesso!");
-    queryClient.invalidateQueries({ queryKey: ["orders"] });
   };
 
-  const filteredOrders = orders.filter((order) => {
-    const matchesSearch =
-      order.order_number.toString().includes(searchTerm) ||
-      order.customers?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (order.room_number && order.room_number.includes(searchTerm));
-    return matchesSearch;
+  // Determine which orders to show
+  const currentOrders = viewMode === 'kanban' ? activeOrders : historyOrders;
+  const isLoading = viewMode === 'kanban' ? loadingActive : loadingHistory;
+
+  const filteredOrders = currentOrders.filter((order) => {
+    const term = searchTerm.toLowerCase();
+    return (
+      order.order_number.toString().includes(term) ||
+      order.customers?.full_name?.toLowerCase().includes(term) ||
+      (order.room_number && order.room_number.includes(term))
+    );
   });
 
-  // Count ready orders for notification badge
-  const readyOrdersCount = orders.filter(o => o.status === "ready").length;
+  const readyOrdersCount = activeOrders.filter(o => o.status === "ready").length;
 
   if (isLoading) {
     return (
@@ -114,7 +93,7 @@ export default function Orders() {
         <div>
           <h1 className="text-3xl font-display font-black tracking-tight text-slate-900">Gestor de Pedidos</h1>
           <p className="text-sm font-medium text-muted-foreground italic">
-            {viewMode === 'kanban' ? 'Fluxo de Produção em Tempo Real' : 'Histórico e Lista Completa'}
+            {viewMode === 'kanban' ? 'Fluxo de Produção (Ativos)' : 'Histórico Completo (Paginado)'}
           </p>
         </div>
 
@@ -183,10 +162,9 @@ export default function Orders() {
       {
         viewMode === 'kanban' ? (
           <div className="flex-1 min-h-0 bg-gray-50/50 rounded-2xl border border-gray-200/50 p-4">
-            {/* Kanban only needs filtered active orders, but we pass full filtered list and let it filter active */}
             <KanbanBoard
               orders={filteredOrders}
-              onStatusUpdate={updateOrderStatus}
+              onStatusUpdate={(id, status) => handleStatusUpdate(id, status)}
               onCancelOrder={cancelOrder}
             />
           </div>
@@ -207,12 +185,37 @@ export default function Orders() {
 
             <div className="flex-1 overflow-auto">
               <OrderTable
-                orders={filteredOrders} // In list view, we usually want to see everything
+                orders={filteredOrders}
                 onViewClick={() => { }}
-                onStatusUpdate={updateOrderStatus}
+                onStatusUpdate={(id, status) => handleStatusUpdate(id, status)}
                 onCancelClick={cancelOrder}
                 onDeleteClick={deleteOrder}
               />
+            </div>
+
+            {/* Pagination Controls */}
+            <div className="flex items-center justify-between border-t pt-4 mt-4">
+              <p className="text-xs text-slate-500 font-medium">
+                Página {page} de {pageCount} (Total: {total})
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page <= 1}
+                  onClick={() => setPage(p => p - 1)}
+                >
+                  Anterior
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page >= pageCount}
+                  onClick={() => setPage(p => p + 1)}
+                >
+                  Próxima
+                </Button>
+              </div>
             </div>
           </div>
         )
