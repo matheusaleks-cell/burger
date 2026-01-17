@@ -38,10 +38,14 @@ export function PousadaProvider({ children }: { children: ReactNode }) {
                 setIsDeliveryMode(false);
                 localStorage.setItem(POUSADA_STORAGE_KEY, JSON.stringify(foundBySlug));
                 localStorage.removeItem("guest_delivery_mode");
-                return; // Stop processing
+                setIsInitializing(false); // Stop loading immediately
+                return;
             } else {
                 // Fallback if slug invalid?
                 // console.log("Invalid slug");
+                toast.error("Parceiro não encontrado: " + urlPousadaSlug);
+                // If not found, we should probably stop loading anyway and show default or None
+                // Doing nothing means falling through to next checks
             }
         }
 
