@@ -33,17 +33,43 @@ interface GuestIdentificationProps {
     onIdentify: (e: React.FormEvent, selectedPousadaId?: string, isDelivery?: boolean) => void;
     pousadas: Pousada[];
     neighborhoods?: Neighborhood[];
+    currentPousada?: Pousada | null; // Added prop
 }
 
 type OrderMode = 'delivery' | 'local' | 'pousada';
 
-export function GuestIdentification({ guestInfo, setGuestInfo, onIdentify, pousadas, neighborhoods = [] }: GuestIdentificationProps) {
+export function GuestIdentification({ guestInfo, setGuestInfo, onIdentify, pousadas, neighborhoods = [], currentPousada }: GuestIdentificationProps) {
     const [mode, setMode] = useState<OrderMode | null>(null);
     const [selectedPousadaId, setSelectedPousadaId] = useState<string>("");
 
     // Find HQ for 'local' mode
     const hqPousada = pousadas.find(p => p.is_hq);
     const { t } = useLanguage();
+
+    // Auto-detect mode if Pousada is already selected (Partner Mode)
+    useEffect(() => {
+        if (currentPousada) {
+            if (currentPousada.is_hq) {
+                // If HQ, logic might be different (Delivery or Local), so we might still ask?
+                // Or maybe we assume Local if they picked HQ explicitly? 
+                // Usually direct HQ link implies Local/Table. Delivery has its own flow.
+                // Let's assume if they are on HQ specifically, it's Local.
+                // But wait, Delivery attaches to HQ.
+                // If they came via link `?pousada_id=HQ_ID`, they are essentially "Dining In" at HQ.
+                // Delivery is usually `?delivery=true`.
+                // So:
+                // setMode('local');
+                // But let's leave HQ open for now as "Delivery" is also an option there.
+                // IF it's a PARTNER (!is_hq), it's DEFINITELY 'pousada' mode.
+
+                // Actually, if it IS HQ, we might still want to ask Delivery vs Local if not specified.
+                // But for PARTNERS, we skip.
+            } else {
+                setMode('pousada');
+                setSelectedPousadaId(currentPousada.id);
+            }
+        }
+    }, [currentPousada]);
 
     const updateAddressString = (newInfo: GuestInfo) => {
         if (mode === 'delivery') {
@@ -77,13 +103,18 @@ export function GuestIdentification({ guestInfo, setGuestInfo, onIdentify, pousa
             updated.room = addressParts.join(', ');
         }
 
-        setGuestInfo(updated); // We don't need updateAddressString wrapper if we do it inline here especially since updateAddressString used old logic
+        setGuestInfo(updated);
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
+        // If locked to a partner, ensure we use that ID
         let targetPousadaId = selectedPousadaId;
+        if (currentPousada && !currentPousada.is_hq) {
+            targetPousadaId = currentPousada.id;
+        }
+
         let isDelivery = false;
 
         if (mode === 'local') {
@@ -194,6 +225,9 @@ export function GuestIdentification({ guestInfo, setGuestInfo, onIdentify, pousa
     const theme = getThemeClasses(mode!);
     const TitleIcon = mode === 'delivery' ? Bike : mode === 'pousada' ? Home : Store;
 
+    // Logic to lock the selection if already provided
+    const isPousadaLocked = !!(currentPousada && !currentPousada.is_hq && mode === 'pousada');
+
     return (
         <div className="relative min-h-screen flex items-center justify-center p-4 bg-gray-50/50">
             <div
@@ -203,24 +237,33 @@ export function GuestIdentification({ guestInfo, setGuestInfo, onIdentify, pousa
 
             <Card className="z-10 w-full max-w-md bg-white shadow-2xl animate-scale-in overflow-hidden border-none ring-1 ring-gray-100">
                 <CardHeader className={`relative text-center border-b pb-8 pt-8 ${theme.bg}`}>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute left-4 top-4 h-8 w-8 rounded-full bg-white/50 hover:bg-white text-gray-600 transition-colors"
-                        onClick={() => setMode(null)}
-                    >
-                        <span className="sr-only">{t.guest.back}</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
-                    </Button>
+                    {/* Only show back button if not locked to a partner */}
+                    {!isPousadaLocked && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute left-4 top-4 h-8 w-8 rounded-full bg-white/50 hover:bg-white text-gray-600 transition-colors"
+                            onClick={() => setMode(null)}
+                        >
+                            <span className="sr-only">{t.guest.back}</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+                        </Button>
+                    )}
 
                     <div className={`mx-auto p-5 rounded-full ${theme.iconBg} mb-4 w-fit shadow-sm`}>
                         <TitleIcon className={`h-10 w-10 ${theme.iconColor}`} />
                     </div>
                     <CardTitle className="text-2xl font-black uppercase text-gray-900 tracking-tight">
-                        {mode === 'delivery' ? t.guest.delivery : mode === 'local' ? t.guest.local : t.guest.pousada}
+                        {isPousadaLocked
+                            ? currentPousada?.name
+                            : (mode === 'delivery' ? t.guest.delivery : mode === 'local' ? t.guest.local : t.guest.pousada)
+                        }
                     </CardTitle>
                     <CardDescription className="text-gray-600 font-medium">
-                        Preencha seus dados para continuar
+                        {isPousadaLocked
+                            ? "Confirme seus dados para continuar"
+                            : "Preencha seus dados para continuar"
+                        }
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="pt-8 p-6">
@@ -304,33 +347,31 @@ export function GuestIdentification({ guestInfo, setGuestInfo, onIdentify, pousa
                                         className={`h-12 bg-gray-50 border-gray-200 ${theme.ring}`}
                                     />
                                 </div>
-                                {/* Hidden Neighborhood Field since we use Select now but store it in 'neighborhood' string? 
-                                    Actually the original code didn't have a 'neighborhood' string field in UI separate from ID. 
-                                    Let's rely on Select for ID and maybe auto-fill name if needed? 
-                                    For now just ID + Street + Number + Complement is enough for Address String.
-                                */}
                             </div>
                         )}
 
                         {mode === 'pousada' && (
                             <>
-                                <div className="space-y-2">
-                                    <Label className="text-sm font-bold text-gray-700">{t.guest.pousada_label}</Label>
-                                    <Select
-                                        value={selectedPousadaId}
-                                        onValueChange={setSelectedPousadaId}
-                                        required
-                                    >
-                                        <SelectTrigger className={`h-12 bg-gray-50 border-gray-200 ${theme.ring}`}>
-                                            <SelectValue placeholder={t.guest.pousada_placeholder} />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {pousadas.filter(p => !p.is_hq).map(p => (
-                                                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
+                                {!isPousadaLocked && (
+                                    <div className="space-y-2">
+                                        <Label className="text-sm font-bold text-gray-700">{t.guest.pousada_label}</Label>
+                                        <Select
+                                            value={selectedPousadaId}
+                                            onValueChange={setSelectedPousadaId}
+                                            required
+                                        >
+                                            <SelectTrigger className={`h-12 bg-gray-50 border-gray-200 ${theme.ring}`}>
+                                                <SelectValue placeholder={t.guest.pousada_placeholder} />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {pousadas.filter(p => !p.is_hq).map(p => (
+                                                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                )}
+
                                 <div className="space-y-2">
                                     <Label className="text-sm font-bold text-gray-700">{t.guest.room_label}</Label>
                                     <Input

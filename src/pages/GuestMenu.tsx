@@ -488,6 +488,7 @@ export default function GuestMenu() {
               onIdentify={(e, selectedPousadaId, isDelivery) => handleIdentify(e, selectedPousadaId, isDelivery)}
               pousadas={pousadas}
               neighborhoods={neighborhoods}
+              currentPousada={currentPousada} // Passing current pousada context
             />
           </div>
         </div>
