@@ -46,7 +46,9 @@ export default function Pousadas() {
     delivery_radius_km: "5",
     base_delivery_fee: "0",
     fee_per_km: "1.50",
+    fee_per_km: "1.50",
     is_hq: false,
+    slug: "",
     hidden_categories: [] as string[]
   });
 
@@ -102,7 +104,9 @@ export default function Pousadas() {
       delivery_radius_km: radius,
       base_delivery_fee: baseFee,
       fee_per_km: kmFee,
+      fee_per_km: kmFee,
       is_hq: form.is_hq,
+      slug: form.slug ? form.slug.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') : null,
       hidden_categories: form.hidden_categories || []
     };
 
@@ -150,6 +154,7 @@ export default function Pousadas() {
       base_delivery_fee: pousada.base_delivery_fee?.toString() || "0",
       fee_per_km: pousada.fee_per_km?.toString() || "1.50",
       is_hq: pousada.is_hq || false,
+      slug: pousada.slug || "",
       hidden_categories: pousada.hidden_categories || []
     });
     setIsDialogOpen(true);
@@ -196,6 +201,7 @@ export default function Pousadas() {
       base_delivery_fee: "0",
       fee_per_km: "1.50",
       is_hq: false,
+      slug: "",
       hidden_categories: []
     });
   };
@@ -268,6 +274,19 @@ export default function Pousadas() {
                         placeholder="Ex: Pousada Central"
                         required
                       />
+                    </div>
+
+                    <div className="space-y-2 col-span-2">
+                      <Label htmlFor="slug">Slug (URL Amigável)</Label>
+                      <Input
+                        id="slug"
+                        value={form.slug}
+                        onChange={(e) => setForm({ ...form, slug: e.target.value })}
+                        placeholder="Ex: adega-do-gordo"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Link: {window.location.origin}/?parceiro={form.slug || '...'}
+                      </p>
                     </div>
 
                     <div className="space-y-2 col-span-2">
@@ -439,6 +458,18 @@ export default function Pousadas() {
                               Taxa Fixa: R${pousada.delivery_fee?.toFixed(2)}
                             </span>
                           </>
+                        )}
+                        {pousada.slug && (
+                          <div className="mt-2 pt-1 border-t border-dashed">
+                            <a
+                              href={`/?parceiro=${pousada.slug}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-xs text-primary font-bold hover:underline flex items-center gap-1"
+                            >
+                              🔗 Link do Parceiro
+                            </a>
+                          </div>
                         )}
                       </div>
                     </TableCell>

@@ -26,6 +26,7 @@ export interface Pousada {
     first_order_discount_type?: 'percentage' | 'fixed' | 'delivery_free';
     first_order_discount_value?: number;
     hidden_categories?: string[];
+    slug?: string;
 }
 
 export type PousadaInput = Omit<Pousada, "id">;

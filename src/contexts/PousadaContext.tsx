@@ -26,10 +26,26 @@ export function PousadaProvider({ children }: { children: ReactNode }) {
         if (isLoadingPousadas) return;
 
         const urlPousadaId = searchParams.get("pousada_id");
+        const urlPousadaSlug = searchParams.get("parceiro"); // New: Partner Slug
         const storedPousadaJson = localStorage.getItem(POUSADA_STORAGE_KEY);
         const storedDeliveryMode = localStorage.getItem("guest_delivery_mode");
 
-        // 1. Priority: URL Param
+        // 1. Priority: URL Slug (Partner Link)
+        if (urlPousadaSlug) {
+            const foundBySlug = pousadas.find(p => p.slug === urlPousadaSlug);
+            if (foundBySlug) {
+                setCurrentPousada(foundBySlug);
+                setIsDeliveryMode(false);
+                localStorage.setItem(POUSADA_STORAGE_KEY, JSON.stringify(foundBySlug));
+                localStorage.removeItem("guest_delivery_mode");
+                return; // Stop processing
+            } else {
+                // Fallback if slug invalid?
+                // console.log("Invalid slug");
+            }
+        }
+
+        // 2. Priority: URL Param ID
         if (urlPousadaId) {
             const found = pousadas.find(p => p.id === urlPousadaId);
             if (found) {
@@ -58,6 +74,7 @@ export function PousadaProvider({ children }: { children: ReactNode }) {
         else if (storedPousadaJson) {
             try {
                 const stored = JSON.parse(storedPousadaJson) as Pousada;
+                // Verify if stored pousada still exists (optional safety)
                 setCurrentPousada(stored);
                 setIsDeliveryMode(false);
             } catch (e) {

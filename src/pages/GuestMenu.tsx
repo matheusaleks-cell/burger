@@ -440,6 +440,38 @@ export default function GuestMenu() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24 font-sans">
+      {/* LANDING SELECTION (Initial Choice) */}
+      {!currentPousada && !isDeliveryMode && (
+        <LandingSelection onSelect={(mode) => {
+          if (mode === 'delivery') {
+            // Set Delivery Mode
+            // We can use the context setPousada(null) to maybe trigger, 
+            // but PousadaContext implementation says:
+            // setPousada(null) -> sets Delivery Mode.
+            setPousada(null);
+          } else {
+            // Local/Pousada Mode
+            // We open the Identification Modal which has Pousada Selection?
+            // Or we just proceed?
+            // If we pick 'pousada', we still don't have a specific pousada.
+            // We should probably prompt for Pousada Selection next.
+            // Let's trigger the GuestIdentification with mode 'pousada' pre-selected?
+            // GuestIdentification handles Pousada selection.
+            // But we need to "hide" the LandingSelection.
+            // We can't set a state here easily without affecting context unless we have a local "bypass" state.
+            // However, context drives everything.
+
+            // If I set "isIdentificationOpen(true)", the LandingSelection is still there underneath?
+            // No, "LandingSelection" shows if !currentPousada && !isDeliveryMode.
+            // If I open Identification, those are still false.
+            // So Identification must be OVER LandingSelection.
+            // Let's ensure Z-Index is high.
+
+            setIsIdentificationOpen(true);
+          }
+        }} />
+      )}
+
       {isIdentificationOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 overflow-y-auto flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
           <div className="relative w-full max-w-md">
@@ -578,3 +610,47 @@ function ArrowRight(props: any) {
     <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
   )
 }
+
+function LandingSelection({ onSelect }: { onSelect: (mode: 'delivery' | 'local' | 'pousada') => void }) {
+  return (
+    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
+      {/* Reusing GuestIdentification logic or simplified version */}
+      {/* Actually, let's reuse the GuestIdentification MOde Selector UI part if possible or create a new one */}
+      <div className="w-full max-w-2xl bg-white rounded-xl shadow-2xl overflow-hidden animate-slide-up">
+        <div className="p-8 text-center border-b border-gray-100 bg-gray-50/50">
+          <h2 className="text-3xl font-black text-gray-800 mb-2">Bem-vindo!</h2>
+          <p className="text-gray-600 text-lg">Como deseja realizar seu pedido hoje?</p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-4 p-6">
+          <button
+            onClick={() => onSelect('delivery')}
+            className="flex flex-col items-center gap-4 p-8 rounded-xl border-2 border-dashed border-emerald-200 bg-emerald-50/50 hover:bg-emerald-100 hover:border-emerald-400 hover:scale-[1.02] transition-all group"
+          >
+            <div className="p-4 bg-emerald-200 rounded-full group-hover:bg-emerald-300 transition-colors">
+              <span className="text-4xl">🛵</span>
+            </div>
+            <div className="text-center">
+              <span className="block font-bold text-xl text-emerald-900">Delivery</span>
+              <span className="text-sm text-emerald-700">Receber em casa ou hotel</span>
+            </div>
+          </button>
+
+          <button
+            onClick={() => onSelect('pousada')} // 'pousada' triggers the Partner selection later? Or we might loop pouseada + local together
+            className="flex flex-col items-center gap-4 p-8 rounded-xl border-2 border-dashed border-blue-200 bg-blue-50/50 hover:bg-blue-100 hover:border-blue-400 hover:scale-[1.02] transition-all group"
+          >
+            <div className="p-4 bg-blue-200 rounded-full group-hover:bg-blue-300 transition-colors">
+              <span className="text-4xl">🍽️</span>
+            </div>
+            <div className="text-center">
+              <span className="block font-bold text-xl text-blue-900">Consumo Local</span>
+              <span className="text-sm text-blue-700">Parceiros ou Retirada</span>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
